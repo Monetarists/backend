@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
-
+using XIVMarketBoard_Api;
+using Newtonsoft.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -41,6 +42,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
 }
@@ -52,7 +54,7 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/getAllItems", () =>
 {
     var forecast = Enumerable.Range(1, 5).Select(index =>
        new WeatherForecast
@@ -64,11 +66,52 @@ app.MapGet("/weatherforecast", () =>
         .ToArray();
     return forecast;
 })
-.WithName("GetWeatherForecast");
+.WithName("Import All Items From XIV Api");
 
+app.MapGet("/getAllRecipies", () =>
+{
+    
+    var recipies = XivApiImport.getAllRecipes();
+
+    return recipies;
+})
+.WithName("Import All Recipies From XIV Api");
+app.MapGet("/getAllRecipiesAsync", () =>
+{
+
+    var recipies = XivApiImport.ImportAllRecipesAsync();
+
+    return JsonConvert.SerializeObject(recipies.Result);
+})
+.WithName("Import All Recipies From XIV Api Async");
+//app.Urls.Add("https://localhost:1923");
 app.Run();
 
 internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+/*
+ 
+ 
+  {
+    "indexes": "recipe",
+    "page": "1",
+    "columns": "ID,Name,UrlType",
+    "body": {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "wildcard": {
+                            "Name_en": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        "from": 2,
+        "size": 1
+    }
+}
+ */
