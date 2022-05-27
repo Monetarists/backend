@@ -17,7 +17,7 @@ namespace XIVMarketBoard_Api
             "ItemIngredient2.Name,ItemIngredient2.ID,ItemIngredient3.Name,ItemIngredient3.ID,ItemIngredient4.Name,ItemIngredient4.ID," +
             "ItemIngredient5.Name,ItemIngredient5.ID,ItemIngredient6.Name,ItemIngredient6.ID,ItemIngredient7.Name,ItemIngredient7.ID," +
             "ItemIngredient8.Name,ItemIngredient8.ID,ItemIngredient9.Name,ItemIngredient9.ID,ItemResult.ID,ItemResult.Name";
-        private const string apikey = "e8e13efbf65441a0a5c51cb0c1415b35d3f603394b3a40dab6378a21c87d7767";
+        private const string apikey = Credentials.XIVApiKey;
 
         private static readonly HttpClient client = new HttpClient();
         public List<Item> getAllItems()
