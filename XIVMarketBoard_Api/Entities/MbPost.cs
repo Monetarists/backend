@@ -15,6 +15,8 @@ namespace XIVMarketBoard_Api.Entities
         public int Amount { get; set; }
         public int TotalAmount { get; set; }
         public bool HighQuality { get; set; }
-        public DateTime PostedDate { get; set; }        
+        public DateTime PostedDate { get; set; }       
+        public World World { get; set; }
+        public DateTime QueryDate { get; set; }
     }
 }
