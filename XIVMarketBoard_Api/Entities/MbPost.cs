@@ -6,7 +6,7 @@ namespace XIVMarketBoard_Api.Entities
     public class MbPost
     {
         [Key,DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int PostId { get; set; }
+        public int Id { get; set; }
         public virtual User? User { get; set; }
         public virtual Retainer? Retainer { get; set; }
         public virtual Item Item { get; set; }
