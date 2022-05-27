@@ -10,5 +10,6 @@ namespace XIVMarketBoard_Api.Entities
         public Item Item { get; set; }
         public bool HighQuality { get; set; }
         public DateTime SaleDate { get; set; }
+        public World World { get; set; }
     }
 }
