@@ -64,11 +64,6 @@ namespace XIVMarketBoard_Api
                 contentString = "error" + result.Content.ReadAsStringAsync().Result;
             }
 
-
-
-
-
-
             return contentString;
         }
         public static async Task<List<Result>> GetAllItemsAsync()
@@ -281,64 +276,64 @@ namespace XIVMarketBoard_Api
             return result;
             
         }
+        public class ResponeResults
+        {
+            public Pagination Pagination { get; set; }
+            public Result[] Results { get; set; }
+        }
+        public class Pagination
+        {
+
+            public int Results;
+            public int ResultsTotal;
+        }
+
+        public class Result
+        {
+            public int Id;
+            public string Name;
+            public ClassJob ClassJob;
+            public ItemResult ItemResult;
+            public int AmountResult;
+            public int AmountIngredient0;
+            public int AmountIngredient1;
+            public int AmountIngredient2;
+            public int AmountIngredient3;
+            public int AmountIngredient4;
+            public int AmountIngredient5;
+            public int AmountIngredient6;
+            public int AmountIngredient7;
+            public int AmountIngredient8;
+            public int AmountIngredient9;
+            public ItemIngredient ItemIngredient0;
+            public ItemIngredient ItemIngredient1;
+            public ItemIngredient ItemIngredient2;
+            public ItemIngredient ItemIngredient3;
+            public ItemIngredient ItemIngredient4;
+            public ItemIngredient ItemIngredient5;
+            public ItemIngredient ItemIngredient6;
+            public ItemIngredient ItemIngredient7;
+            public ItemIngredient ItemIngredient8;
+            public ItemIngredient ItemIngredient9;
+
+        }
+        public class ItemIngredient
+        {
+            public string ID;
+            public string Name;
+        }
+        public class ClassJob
+        {
+            public string ID;
+            public string Abbreviation_en;
+            public string Name_en;
+        }
+        public class ItemResult
+        {
+            public int Id;
+            public string Name;
+        }
 
 
     }
-}
-public class ResponeResults
-{
-    public Pagination Pagination { get; set; }
-    public Result[] Results { get; set; }
-}
-public class Pagination
-{
-
-    public int Results;
-    public int ResultsTotal;
-}
-
-public class Result
-{
-    public int Id;
-    public string Name;
-    public ClassJob ClassJob;
-    public ItemResult ItemResult;
-    public int AmountResult;
-    public int AmountIngredient0;
-    public int AmountIngredient1;
-    public int AmountIngredient2;
-    public int AmountIngredient3;
-    public int AmountIngredient4;
-    public int AmountIngredient5;
-    public int AmountIngredient6;
-    public int AmountIngredient7;
-    public int AmountIngredient8;
-    public int AmountIngredient9;
-    public ItemIngredient ItemIngredient0;
-    public ItemIngredient ItemIngredient1;
-    public ItemIngredient ItemIngredient2;
-    public ItemIngredient ItemIngredient3;
-    public ItemIngredient ItemIngredient4;
-    public ItemIngredient ItemIngredient5;
-    public ItemIngredient ItemIngredient6;
-    public ItemIngredient ItemIngredient7;
-    public ItemIngredient ItemIngredient8;
-    public ItemIngredient ItemIngredient9;
-
-}
-public class ItemIngredient
-{
-    public string ID;
-    public string Name;
-}
-public class ClassJob
-{
-    public string ID;
-    public string Abbreviation_en;
-    public string Name_en;
-}
-public class ItemResult
-{
-    public int Id;
-    public string Name;
 }
