@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using XIVMarketBoard_Api.Data;
 
@@ -10,9 +11,10 @@ using XIVMarketBoard_Api.Data;
 namespace XIVMarketBoard_Api.Migrations
 {
     [DbContext(typeof(XivDbContext))]
-    partial class XivDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220213164045_ChangedIdNames")]
+    partial class ChangedIdNames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,7 +72,7 @@ namespace XIVMarketBoard_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("JobName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -154,7 +156,7 @@ namespace XIVMarketBoard_Api.Migrations
 
                     b.HasIndex("jobId");
 
-                    b.ToTable("Recipies");
+                    b.ToTable("Recipes");
                 });
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Retainer", b =>
@@ -166,7 +168,7 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("RetainerName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -228,14 +230,14 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.World", b =>
                 {
-                    b.Property<string>("Name")
+                    b.Property<string>("WorldName")
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DataCenter")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.HasKey("Name");
+                    b.HasKey("WorldName");
 
                     b.ToTable("Servers");
                 });

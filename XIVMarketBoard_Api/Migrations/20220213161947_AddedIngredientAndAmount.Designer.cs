@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using XIVMarketBoard_Api.Data;
 
@@ -10,9 +11,10 @@ using XIVMarketBoard_Api.Data;
 namespace XIVMarketBoard_Api.Migrations
 {
     [DbContext(typeof(XivDbContext))]
-    partial class XivDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220213161947_AddedIngredientAndAmount")]
+    partial class AddedIngredientAndAmount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,7 +47,7 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Item", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ItemId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -59,7 +61,7 @@ namespace XIVMarketBoard_Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.HasKey("Id");
+                    b.HasKey("ItemId");
 
                     b.ToTable("Items");
                 });
@@ -70,7 +72,7 @@ namespace XIVMarketBoard_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("JobName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -86,7 +88,7 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.MbPost", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PostId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -118,7 +120,7 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<string>("UserName")
                         .HasColumnType("varchar(255)");
 
-                    b.HasKey("Id");
+                    b.HasKey("PostId");
 
                     b.HasIndex("ItemId");
 
@@ -131,7 +133,7 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Recipe", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("RecipeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -148,25 +150,25 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<int>("jobId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("RecipeId");
 
                     b.HasIndex("ItemId");
 
                     b.HasIndex("jobId");
 
-                    b.ToTable("Recipies");
+                    b.ToTable("Recipes");
                 });
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Retainer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("RetainerId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("RetainerName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -178,7 +180,7 @@ namespace XIVMarketBoard_Api.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.HasKey("Id");
+                    b.HasKey("RetainerId");
 
                     b.HasIndex("UserName");
 
@@ -189,7 +191,7 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.SaleHistory", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("SaleHistoryId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -202,7 +204,7 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("datetime(6)");
 
-                    b.HasKey("Id");
+                    b.HasKey("SaleHistoryId");
 
                     b.HasIndex("ItemId");
 
@@ -228,14 +230,14 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.World", b =>
                 {
-                    b.Property<string>("Name")
+                    b.Property<string>("WorldName")
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DataCenter")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.HasKey("Name");
+                    b.HasKey("WorldName");
 
                     b.ToTable("Servers");
                 });
