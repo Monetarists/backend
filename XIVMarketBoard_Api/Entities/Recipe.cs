@@ -5,13 +5,12 @@ namespace XIVMarketBoard_Api.Entities
     public class Recipe
     {
         [Key]
-        public int RecipeId { get; set; }
-        public int ItemId { get; set; }
-        public virtual List<Item> Ingredients { get; set; }
+        public int Id { get; set; }
+        public Item Item { get; set; }
+        public int AmountResult { get; set; }
+        public virtual List<Ingredient> Ingredients { get; set; }
         public string Name { get; set; }
         public virtual Job job { get; set; }
-
-
     }
 }
 
