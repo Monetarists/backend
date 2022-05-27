@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage;
 using System.Diagnostics;
 using System.Linq;
+using XIVMarketBoard_Api.Entities;
 
-namespace XIVMarketBoard_Backend.Data
+namespace XIVMarketBoard_Api.Data
 {
     
     public class XivDbContext:DbContext
@@ -41,13 +42,14 @@ namespace XIVMarketBoard_Backend.Data
         {
         }
         public XivDbContext(DbContextOptions options) : base(options) { }
-        public DbSet<Models.Item> Items { get; set; }
-        public DbSet<Models.User> Users { get; set; }
-        public DbSet<Models.Recipe> Recipes { get; set; }
-        public DbSet<Models.World> Servers { get; set; }
-        public DbSet<Models.Job> Jobs { get; set; }
-        public DbSet<Models.Retainer> Retainers { get; set; }
-        public DbSet<Models.MbPost> MbPosts { get; set; }
-        public DbSet<Models.SaleHistory> SaleHistory { get; set; }
+        public DbSet<Item> Items { get; set; }
+        public DbSet<Ingredient> Ingredients { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Recipe> Recipes { get; set; }
+        public DbSet<World> Servers { get; set; }
+        public DbSet<Job> Jobs { get; set; }
+        public DbSet<Retainer> Retainers { get; set; }
+        public DbSet<MbPost> MbPosts { get; set; }
+        public DbSet<SaleHistory> SaleHistory { get; set; }
     }
 }
