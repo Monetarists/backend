@@ -137,7 +137,6 @@ namespace XIVMarketBoard_Api
 
                 }
             
-
                 var Recipes = await CreateRecipes(resultList);
 
                 using (var dbContext = new XivDbContext())
@@ -153,6 +152,7 @@ namespace XIVMarketBoard_Api
                             {
                                 ingredient.Item = await GetOrCreateItem(ingredient.Item, dbContext);
                             }
+                            recipe.Item.CanBeCrafted = true;
                             recipe.Item = await GetOrCreateItem(recipe.Item, dbContext);
                             recipe.job = await GetOrCreateJob(recipe.job, dbContext);
                             dbContext.Add(recipe);
