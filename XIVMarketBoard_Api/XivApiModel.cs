@@ -39,7 +39,14 @@ namespace XIVMarketBoard_Api
 
         }
 
-
+        public static async Task<HttpResponseMessage> getAllWorldsAsync()
+        {
+            return await SendRequestAsync("", "world?limit=3000");
+        }
+        public static async Task<HttpResponseMessage> getWorldDetailsAsync(int Id)
+        {
+            return await SendRequestAsync("", "servers/" + Id);
+        }
 
 
 
@@ -86,7 +93,74 @@ namespace XIVMarketBoard_Api
             return result;
 
         }
+        public class ResponeResults
+        {
+            public Pagination Pagination { get; set; }
+            public Result[] Results { get; set; }
+        }
+        public class Pagination
+        {
 
+            public int Results;
+            public int ResultsTotal;
+        }
+        
+        public class Result
+        {
+            public int Id;
+            public string Name;
+            public ClassJob ClassJob;
+            public Item ItemResult;
+            public int AmountResult;
+            public int AmountIngredient0;
+            public int AmountIngredient1;
+            public int AmountIngredient2;
+            public int AmountIngredient3;
+            public int AmountIngredient4;
+            public int AmountIngredient5;
+            public int AmountIngredient6;
+            public int AmountIngredient7;
+            public int AmountIngredient8;
+            public int AmountIngredient9;
+            public Item ItemIngredient0;
+            public Item ItemIngredient1;
+            public Item ItemIngredient2;
+            public Item ItemIngredient3;
+            public Item ItemIngredient4;
+            public Item ItemIngredient5;
+            public Item ItemIngredient6;
+            public Item ItemIngredient7;
+            public Item ItemIngredient8;
+            public Item ItemIngredient9;
+
+        }
+        public class Item
+        {
+            public int Id;
+            public string Name;
+        }
+        public class ClassJob
+        {
+            public int Id;
+            public string Abbreviation_en;
+            public string Name_en;
+        }
+
+        public class WorldDetailResult
+        {
+            public int Id;
+            public string Name;
+            public string Name_en;
+            public bool InGame;
+            public DataCenterResult DataCenter;
+        }
+        public class DataCenterResult
+        {
+            public int Id;
+            public string Name;
+            public string Name_en;
+            public string Region;
+        }
 
     }
 }
