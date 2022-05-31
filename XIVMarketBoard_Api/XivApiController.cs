@@ -27,24 +27,31 @@ namespace XIVMarketBoard_Api
                         if(server.Name != "")
                         {
                             var responseWd = await XivApiModel.getWorldDetailsAsync(server.Id);
+                            var resp = await responseWd.Content.ReadAsStringAsync();
                             var worldContent = JsonConvert.DeserializeObject<XivApiModel.WorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
                             if (worldContent.InGame == true && worldContent.Name_en != "")
                             {
-                                var dataCenter = new DataCenter();
-                                dataCenter.Name = worldContent.DataCenter.Name_en;
-                                dataCenter.Id = worldContent.DataCenter.Id;
-                                dataCenter.Region = worldContent.DataCenter.Region;
-                                dcList.Add(dataCenter);
+                                var dcEntity = dcList.FirstOrDefault(p => p.Id == worldContent.DataCenter.Id);
+                                if (dcEntity == null)
+                                {
+                                    dcEntity = new DataCenter();
+                                    dcEntity.Name = worldContent.DataCenter.Name_en;
+                                    dcEntity.Id = worldContent.DataCenter.Id;
+                                    dcEntity.Region = worldContent.DataCenter.Region;
+                                    dcList.Add(dcEntity);
+                                }
+  
                                 var world = new World();
                                 world.Id = worldContent.Id;
                                 world.Name = worldContent.Name;
-                                world.DataCenter = dataCenter;
+                                world.DataCenter = dcEntity;
                                 worldList.Add(world);
                             }
                             await Task.Delay(100);
                         }
 
                     }
+                    var dcListDistinct = dcList.Distinct().ToList();
                     var dcResult = await DbController.saveDataCenters(dcList);
                     var worldResult = await DbController.saveWorlds(worldList);
                     return "import of worlds successful";

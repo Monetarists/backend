@@ -45,7 +45,7 @@ namespace XIVMarketBoard_Api
         }
         public static async Task<HttpResponseMessage> getWorldDetailsAsync(int Id)
         {
-            return await SendRequestAsync("", "servers/" + Id);
+            return await SendRequestAsync("", "world/" + Id);
         }
 
 
