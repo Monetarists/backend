@@ -71,7 +71,7 @@ app.MapGet("/getAllItems", () =>
 app.MapGet("/getAllRecipies", () =>
 {
     
-    var recipies = XivApiImport.getAllRecipes();
+    var recipies = XivApiModel.getAllRecipes();
 
     return recipies;
 })
@@ -79,7 +79,7 @@ app.MapGet("/getAllRecipies", () =>
 app.MapGet("/getAllRecipiesAsync", () =>
 {
 
-    var recipies = XivApiImport.ImportAllRecipesAsync();
+    var recipies = XivApiModel.ImportAllRecipesAsync();
 
     return JsonConvert.SerializeObject(recipies.Result);
 })
