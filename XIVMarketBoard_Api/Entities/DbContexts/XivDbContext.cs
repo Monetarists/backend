@@ -47,9 +47,11 @@ namespace XIVMarketBoard_Api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<World> Servers { get; set; }
+        public DbSet<DataCenter> DataCenters { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Retainer> Retainers { get; set; }
         public DbSet<MbPost> MbPosts { get; set; }
         public DbSet<SaleHistory> SaleHistory { get; set; }
+        public DbSet<UniversalisQuery> UniversalisQueries { get; set; }
     }
 }
