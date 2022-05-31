@@ -5,27 +5,83 @@ using System.Text;
 using XIVMarketBoard_Api.Data;
 using System;
 using Microsoft.EntityFrameworkCore;
+
 namespace XIVMarketBoard_Api
 {
     public class XIVApiController
     {
-        public async Task<string> resetAndImportRecipiesAndItems()
+        public static async Task<string> ImportAllWorldsAndDataCenters()
+        {
+            try
+            {
+                var response = await XivApiModel.getAllWorldsAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                
+                    var responseResult = JsonConvert.DeserializeObject<XivApiModel.ResponeResults>(await response.Content.ReadAsStringAsync());
+                    var worldList = new List<World>();
+                    var dcList = new List<DataCenter>();
+
+                    foreach (var server in responseResult.Results)
+                    {
+                        if(server.Name != "")
+                        {
+                            var responseWd = await XivApiModel.getWorldDetailsAsync(server.Id);
+                            var worldContent = JsonConvert.DeserializeObject<XivApiModel.WorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
+                            if (worldContent.InGame == true && worldContent.Name_en != "")
+                            {
+                                var dataCenter = new DataCenter();
+                                dataCenter.Name = worldContent.DataCenter.Name_en;
+                                dataCenter.Id = worldContent.DataCenter.Id;
+                                dataCenter.Region = worldContent.DataCenter.Region;
+                                dcList.Add(dataCenter);
+                                var world = new World();
+                                world.Id = worldContent.Id;
+                                world.Name = worldContent.Name;
+                                world.DataCenter = dataCenter;
+                                worldList.Add(world);
+                            }
+                            await Task.Delay(100);
+                        }
+
+                    }
+                    var dcResult = await DbController.saveDataCenters(dcList);
+                    var worldResult = await DbController.saveWorlds(worldList);
+                    return "import of worlds successful";
+                }
+                else
+                {
+                    return "error";
+                }
+
+            }
+            catch (Exception e)
+            {
+                return "error: " + e.Message;
+            }
+
+
+            return "should not get here";
+
+
+        }
+        public static async Task<string> resetAndImportRecipiesAndItems()
         {
             int start = 0;
             int amount = 500;
             int responseAmount = 1;
             int resultsNumber = 0;
             string resultString = "";
-            var resultList = new List<Result>();
+            var resultList = new List<XivApiModel.Result>();
             string contentString;
-
+            
             while (responseAmount > resultsNumber)
             {
                 var httpResponse = await XivApiModel.getRecipesAsync(start, amount);
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
                     contentString = await httpResponse.Content.ReadAsStringAsync();
-                    var responseResults = JsonConvert.DeserializeObject<ResponeResults>(contentString);
+                    var responseResults = JsonConvert.DeserializeObject<XivApiModel.ResponeResults>(contentString);
                     resultList.AddRange(responseResults.Results);
                     if (resultsNumber == 0)
                     {
@@ -44,26 +100,22 @@ namespace XIVMarketBoard_Api
             try
             {
                 var recipeList = await CreateRecipes(resultList);
-                using (var xivContext = new XivDbContext())
-                {
-
-                    xivContext.Database.ExecuteSqlRaw(@"SET FOREIGN_KEY_CHECKS = 0; Truncate table Recipes;Truncate table Ingredients;Truncate table Items; SET FOREIGN_KEY_CHECKS = 1");
-                    await SaveRecipiesToDb(xivContext, recipeList);
-                }
+                await DbController.SaveRecipiesToDb(recipeList);
+                
             }
             catch (Exception e) { return "error" + e.Message; }
             return resultString;
 
         }
-
-        private static async Task<List<Recipe>> CreateRecipes(List<Result> resultList)
+        
+        private static async Task<List<Recipe>> CreateRecipes(List<XivApiModel.Result> resultList)
         {
             var recipeList = new List<Recipe>();
             foreach (var r in resultList)
             {
                 Recipe recipe = new Recipe();
                 recipe.Ingredients = CreateIngredientList(r);
-                recipe.job = new Job { Id = Int32.Parse(r.ClassJob.ID), Name = r.ClassJob.Name_en };
+                recipe.job = new Job { Id = r.ClassJob.Id, Name = r.ClassJob.Name_en };
                 recipe.Id = r.Id;
                 recipe.Name = r.Name;
                 recipe.Item = new Item { Id = r.ItemResult.Id, Name = r.ItemResult.Name };
@@ -71,69 +123,27 @@ namespace XIVMarketBoard_Api
                 recipeList.Add(recipe);
 
             }
-
+            
             return recipeList;
         }
-        private static List<Ingredient> CreateIngredientList(Result r)
+        private static List<Ingredient> CreateIngredientList(XivApiModel.Result r)
         {
             var ingredientList = new List<Ingredient>();
 
-            if (r.AmountIngredient0 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = Int32.Parse(r.ItemIngredient0.ID), Name = r.ItemIngredient0.Name } });
-            if (r.AmountIngredient1 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = Int32.Parse(r.ItemIngredient1.ID), Name = r.ItemIngredient1.Name } });
-            if (r.AmountIngredient2 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = Int32.Parse(r.ItemIngredient2.ID), Name = r.ItemIngredient2.Name } });
-            if (r.AmountIngredient3 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = Int32.Parse(r.ItemIngredient3.ID), Name = r.ItemIngredient3.Name } });
-            if (r.AmountIngredient4 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = Int32.Parse(r.ItemIngredient4.ID), Name = r.ItemIngredient4.Name } });
-            if (r.AmountIngredient5 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = Int32.Parse(r.ItemIngredient5.ID), Name = r.ItemIngredient5.Name } });
-            if (r.AmountIngredient6 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = Int32.Parse(r.ItemIngredient6.ID), Name = r.ItemIngredient6.Name } });
-            if (r.AmountIngredient7 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = Int32.Parse(r.ItemIngredient7.ID), Name = r.ItemIngredient7.Name } });
-            if (r.AmountIngredient8 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = Int32.Parse(r.ItemIngredient8.ID), Name = r.ItemIngredient8.Name } });
-            if (r.AmountIngredient9 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = Int32.Parse(r.ItemIngredient9.ID), Name = r.ItemIngredient9.Name } });
+            if (r.AmountIngredient0 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id, Name = r.ItemIngredient0.Name } });
+            if (r.AmountIngredient1 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id, Name = r.ItemIngredient1.Name } });
+            if (r.AmountIngredient2 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id, Name = r.ItemIngredient2.Name } });
+            if (r.AmountIngredient3 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id, Name = r.ItemIngredient3.Name } });
+            if (r.AmountIngredient4 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id, Name = r.ItemIngredient4.Name } });
+            if (r.AmountIngredient5 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id, Name = r.ItemIngredient5.Name } });
+            if (r.AmountIngredient6 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id, Name = r.ItemIngredient6.Name } });
+            if (r.AmountIngredient7 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id, Name = r.ItemIngredient7.Name } });
+            if (r.AmountIngredient8 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id, Name = r.ItemIngredient8.Name } });
+            if (r.AmountIngredient9 > 0) ingredientList.Add(new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id, Name = r.ItemIngredient9.Name } });
 
             return ingredientList;
         }
-        public async Task<string> SaveRecipiesToDb(XivDbContext xivContext, List<Recipe> RecipeList)
-        {
 
-            foreach (var recipe in RecipeList)
-            {
-                foreach (var ingredient in recipe.Ingredients)
-                {
-                    ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item, xivContext);
-                }
-                recipe.Item.CanBeCrafted = true;
-                recipe.Item = await GetOrCreateItemFromContext(recipe.Item, xivContext);
-                recipe.job = await GetOrCreateJobFromContext(recipe.job, xivContext);
-                xivContext.Add(recipe);
-            }
-
-            await xivContext.SaveChangesAsync();
-            return "successfully saved " + RecipeList.Count + "recipies";
-
-        }
-        private static async Task<Job> GetOrCreateJobFromContext(Job job, XivDbContext dbContext)
-        {
-            var tempJob = await dbContext.Jobs.FindAsync(job.Id);
-            if (tempJob == null)
-            {
-                dbContext.Add(job);
-                await dbContext.SaveChangesAsync();
-                return job;
-            }
-
-            return tempJob;
-        }
-        private static async Task<Item> GetOrCreateItemFromContext(Item item, XivDbContext dbContext)
-        {
-            var tempItem = await dbContext.Items.FindAsync(item.Id);
-            if (tempItem == null)
-            {
-                dbContext.Add(item);
-                await dbContext.SaveChangesAsync();
-                return item;
-            }
-
-            return tempItem;
-        }
         /*public string getAllItems() {
             List<Result> resultList = new List<Result>();
             string contentString;
@@ -167,63 +177,7 @@ namespace XIVMarketBoard_Api
         {
             return "";
         }
-        public class ResponeResults
-        {
-            public Pagination Pagination { get; set; }
-            public Result[] Results { get; set; }
-        }
-        public class Pagination
-        {
-
-            public int Results;
-            public int ResultsTotal;
-        }
-
-        public class Result
-        {
-            public int Id;
-            public string Name;
-            public ClassJob ClassJob;
-            public ItemResult ItemResult;
-            public int AmountResult;
-            public int AmountIngredient0;
-            public int AmountIngredient1;
-            public int AmountIngredient2;
-            public int AmountIngredient3;
-            public int AmountIngredient4;
-            public int AmountIngredient5;
-            public int AmountIngredient6;
-            public int AmountIngredient7;
-            public int AmountIngredient8;
-            public int AmountIngredient9;
-            public ItemIngredient ItemIngredient0;
-            public ItemIngredient ItemIngredient1;
-            public ItemIngredient ItemIngredient2;
-            public ItemIngredient ItemIngredient3;
-            public ItemIngredient ItemIngredient4;
-            public ItemIngredient ItemIngredient5;
-            public ItemIngredient ItemIngredient6;
-            public ItemIngredient ItemIngredient7;
-            public ItemIngredient ItemIngredient8;
-            public ItemIngredient ItemIngredient9;
-
-        }
-        public class ItemIngredient
-        {
-            public string ID;
-            public string Name;
-        }
-        public class ClassJob
-        {
-            public string ID;
-            public string Abbreviation_en;
-            public string Name_en;
-        }
-        public class ItemResult
-        {
-            public int Id;
-            public string Name;
-        }
+       
 
     }
 
