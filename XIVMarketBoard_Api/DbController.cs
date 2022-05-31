@@ -31,7 +31,7 @@ namespace XIVMarketBoard_Api
         {
             using (var xivContext = new XivDbContext())
             {
-                return await xivContext.MbPosts.FirstOrDefaultAsync(r => r.Item.Id == itemId);
+                return await xivContext.Posts.FirstOrDefaultAsync(r => r.Item.Id == itemId);
             }
             
         }
@@ -63,7 +63,7 @@ namespace XIVMarketBoard_Api
         {
             using (var xivContext = new XivDbContext())
             {
-                return await xivContext.MbPosts.Where(r => r.Item.Id == itemId).ToListAsync();
+                return await xivContext.Posts.Where(r => r.Item.Id == itemId).ToListAsync();
             }
 
         }
@@ -90,6 +90,7 @@ namespace XIVMarketBoard_Api
                         xivContext.DataCenters.Add(dc);
                     }
                 }
+                
                 await xivContext.SaveChangesAsync();
                 return dcList;
             }
@@ -100,10 +101,15 @@ namespace XIVMarketBoard_Api
             {
                 foreach (var world in worldList)
                 {
-                    var worldToSave = await xivContext.Servers.FirstOrDefaultAsync(r => r.Id == world.Id);
+                    var worldToSave = await xivContext.Worlds.FirstOrDefaultAsync(r => r.Id == world.Id);
+                    var datacenter = await xivContext.DataCenters.FirstOrDefaultAsync(r => r.Id == world.DataCenter.Id);
                     if (worldToSave == null)
                     {
-                        xivContext.Servers.Add(world);
+                        if(datacenter != null)
+                        {
+                            world.DataCenter = datacenter;
+                        }
+                        xivContext.Worlds.Add(world);
                     }
                 }
                 await xivContext.SaveChangesAsync();
