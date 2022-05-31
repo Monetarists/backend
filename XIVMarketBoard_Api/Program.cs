@@ -49,37 +49,20 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
 
-app.MapGet("/getAllItems", () =>
+app.MapGet("/importWorlds", () =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-       new WeatherForecast
-       (
-           DateTime.Now.AddDays(index),
-           Random.Shared.Next(-20, 55),
-           summaries[Random.Shared.Next(summaries.Length)]
-       ))
-        .ToArray();
-    return forecast;
+    var worlds = XIVApiController.ImportAllWorldsAndDataCenters();
+
+    return JsonConvert.SerializeObject(worlds.Result);
 })
-.WithName("Import All Items From XIV Api");
+.WithName("getWorlds");
 
-app.MapGet("/getAllRecipies", () =>
-{
-    
-    var recipies = XivApiModel.getAllRecipes();
 
-    return recipies;
-})
-.WithName("Import All Recipies From XIV Api");
 app.MapGet("/getAllRecipiesAsync", () =>
 {
 
-    var recipies = XivApiModel.ImportAllRecipesAsync();
+    var recipies = XIVApiController.resetAndImportRecipiesAndItems();
 
     return JsonConvert.SerializeObject(recipies.Result);
 })
@@ -87,10 +70,7 @@ app.MapGet("/getAllRecipiesAsync", () =>
 //app.Urls.Add("https://localhost:1923");
 app.Run();
 
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+
 /*
  
  
