@@ -52,6 +52,6 @@ namespace XIVMarketBoard_Api.Data
         public DbSet<Retainer> Retainers { get; set; }
         public DbSet<MbPost> Posts { get; set; }
         public DbSet<SaleHistory> SaleHistory { get; set; }
-        public DbSet<UniversalisQuery> UniversalisQueries { get; set; }
+        public DbSet<UniversalisEntry> UniversalisEntries { get; set; }
     }
 }

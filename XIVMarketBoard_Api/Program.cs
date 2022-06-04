@@ -58,6 +58,16 @@ app.MapGet("/importWorlds", () =>
 })
 .WithName("getWorlds");
 
+app.MapGet("/importItemEntry", (int Itemid, string WorldName, string entries, string listings) =>
+{
+
+    var world = DbController.GetWorldFromName(WorldName);
+    var item = DbController.GetItemFromId(Itemid);
+    var result = UniversalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
+    
+    return "";
+})
+.WithName("importItemEntry");
 
 app.MapGet("/getAllRecipiesAsync", () =>
 {

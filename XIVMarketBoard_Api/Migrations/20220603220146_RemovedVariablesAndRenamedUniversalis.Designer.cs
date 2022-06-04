@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using XIVMarketBoard_Api.Data;
 
@@ -10,9 +11,10 @@ using XIVMarketBoard_Api.Data;
 namespace XIVMarketBoard_Api.Migrations
 {
     [DbContext(typeof(XivDbContext))]
-    partial class XivDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220603220146_RemovedVariablesAndRenamedUniversalis")]
+    partial class RemovedVariablesAndRenamedUniversalis
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,8 +116,8 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<DateTime>("LastReviewDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("double");
+                    b.Property<int>("Price")
+                        .HasColumnType("int");
 
                     b.Property<int?>("RetainerId")
                         .HasColumnType("int");
@@ -128,8 +130,8 @@ namespace XIVMarketBoard_Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<double>("TotalAmount")
-                        .HasColumnType("double");
+                    b.Property<int>("TotalAmount")
+                        .HasColumnType("int");
 
                     b.Property<int?>("UniversalisEntryId")
                         .HasColumnType("int");
@@ -224,8 +226,8 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<double>("Total")
-                        .HasColumnType("double");
+                    b.Property<int>("Total")
+                        .HasColumnType("int");
 
                     b.Property<int?>("UniversalisEntryId")
                         .HasColumnType("int");
@@ -243,26 +245,26 @@ namespace XIVMarketBoard_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<double>("AveragePrice")
-                        .HasColumnType("double");
+                    b.Property<int>("AveragePrice")
+                        .HasColumnType("int");
 
-                    b.Property<double>("AveragePriceHQ")
-                        .HasColumnType("double");
+                    b.Property<int>("AveragePriceHQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("AveragePriceNQ")
-                        .HasColumnType("double");
+                    b.Property<int>("AveragePriceNQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("CurrentAveragePrice")
-                        .HasColumnType("double");
+                    b.Property<int>("CurrentAveragePrice")
+                        .HasColumnType("int");
 
-                    b.Property<double>("CurrentAveragePriceHQ")
-                        .HasColumnType("double");
+                    b.Property<int>("CurrentAveragePriceHQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("CurrentAveragePrinceNQ")
-                        .HasColumnType("double");
+                    b.Property<int>("CurrentAveragePrinceNQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("HqSaleVelocity")
-                        .HasColumnType("double");
+                    b.Property<int>("HqSaleVelocity")
+                        .HasColumnType("int");
 
                     b.Property<int>("ItemId")
                         .HasColumnType("int");
@@ -270,32 +272,32 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<DateTime>("LastUploadDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<double>("MaxPrice")
-                        .HasColumnType("double");
+                    b.Property<int>("MaxPrice")
+                        .HasColumnType("int");
 
-                    b.Property<double>("MaxPriceHQ")
-                        .HasColumnType("double");
+                    b.Property<int>("MaxPriceHQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("MaxPriceNQ")
-                        .HasColumnType("double");
+                    b.Property<int>("MaxPriceNQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("MinPrice")
-                        .HasColumnType("double");
+                    b.Property<int>("MinPrice")
+                        .HasColumnType("int");
 
-                    b.Property<double>("MinPriceHQ")
-                        .HasColumnType("double");
+                    b.Property<int>("MinPriceHQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("MinPriceNQ")
-                        .HasColumnType("double");
+                    b.Property<int>("MinPriceNQ")
+                        .HasColumnType("int");
 
-                    b.Property<double>("NqSaleVelocity")
-                        .HasColumnType("double");
+                    b.Property<int>("NqSaleVelocity")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("QueryDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<double>("RegularSaleVelocity")
-                        .HasColumnType("double");
+                    b.Property<int>("RegularSaleVelocity")
+                        .HasColumnType("int");
 
                     b.Property<int>("WorldId")
                         .HasColumnType("int");
@@ -306,7 +308,7 @@ namespace XIVMarketBoard_Api.Migrations
 
                     b.HasIndex("WorldId");
 
-                    b.ToTable("UniversalisEntries");
+                    b.ToTable("UniversalisQueries");
                 });
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.User", b =>

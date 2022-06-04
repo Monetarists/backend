@@ -1,15 +1,18 @@
-﻿namespace XIVMarketBoard_Api
+﻿using Newtonsoft.Json;
+namespace XIVMarketBoard_Api
 {
-    public class UniversalisApiImport
+    public class UniversalisApiModel
     {
+        //listings = number of current posts
+        //entries = number of history
         public const string baseAddress = "https://universalis.app/api/";
         private static readonly HttpClient client = new HttpClient();
-        public static async Task<string> GetCurrentListings(List<string> idList, string hq, string world, string listings, string entries)
+        public static async Task<HttpResponseMessage> GetCurrentListings(List<string> idList, string hq, string world, string listings, string entries)
         {
             var idString = String.Join(",", idList);
-            var requestAddress = baseAddress + world + "/" + idString + "?listings=" + listings + "?entries=" + entries + hq == null ? "" : "?" + hq;
-            var result = await SendRequestAsync(requestAddress);
-            return result;
+            var requestAddress = baseAddress + world + "/" + idString + "?listings=" + listings + "&entries=" + entries + "&hq=" + hq;
+            var response = await SendRequestAsync(requestAddress);
+            return response;
         }
 
 
@@ -20,59 +23,63 @@
             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dateTime;
         }
-        private static async Task<String> SendRequestAsync(string endpoint)
+        private static async Task<HttpResponseMessage> SendRequestAsync(string endpoint)
         {
 
-            HttpRequestMessage rM = new HttpRequestMessage(System.Net.Http.HttpMethod.Get,endpoint);
-            var result = await client.SendAsync(rM);
-            var resultString = await result.Content.ReadAsStringAsync();
-            Console.Write(result);
-            return resultString;
+            HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get,endpoint);
+            var response = await client.SendAsync(rM);
+            return response;
         }
-        public class Result
+        public class Response
         {
             public List<string> itemIDs { get; set; }
-            public List<Items> items { get; set; }
+            public List<responseItems> items { get; set; }
             public string worldID { get; set; }
             public string WorldName { get; set; }
         }
-        public class Items
+        public class responseItems
         {
             public string itemId { get; set; }
             public string worldId { get; set; }
-            public int lastUploadTime { get; set; }
+            public double lastUploadTime { get; set; }
             public List<Listings> listings { get; set; }
             public List<RecentHistory> recentHistory { get; set; }
-            public int currentAveragePrice { get; set; }
-            public int currentAveragePrinceNQ { get; set; }
-            public int currentAveragePriceHQ { get; set; }
-            public int regularSaleVelocity { get; set; }
-            public int nqSaleVelocity { get; set; }
-            public int hqSaleVelocity { get; set; }
-            public int averagePrice { get;set;}
-            public int averagePriceNQ { get;set;}
-            public int averagePriceHQ { get;set;}
-            public int minPrice { get;set;}
-            public int minPriceNQ { get; set; }
-            public int minPriceHQ { get;set;}
-            public int maxPrice { get;set;}
-            public int maxPriceNQ { get; set; }
-            public int maxPriceHQ { get; set; }
+            public double currentAveragePrice { get; set; }
+            public double currentAveragePrinceNQ { get; set; }
+            public double currentAveragePriceHQ { get; set; }
+            public double regularSaleVelocity { get; set; }
+            public double nqSaleVelocity { get; set; }
+            public double hqSaleVelocity { get; set; }
+            public double averagePrice { get;set;}
+            public double averagePriceNQ { get;set;}
+            public double averagePriceHQ { get;set;}
+            public double minPrice { get;set;}
+            public double minPriceNQ { get; set; }
+            public double minPriceHQ { get;set;}
+            public double maxPrice { get;set;}
+            public double maxPriceNQ { get; set; }
+            public double maxPriceHQ { get; set; }
         }
         public class Listings
         {
-            public int lastReviewTime { get; set; }
-            public int pricePerUnit { get; set; }
+            public double lastReviewTime { get; set; }
+            public double pricePerUnit { get; set; }
             public int quantity { get; set; }
             public bool hq { get; set; }
-            public int total { get; set; }
+            public double total { get; set; }
+            public string retainerName { get; set; }
+            public string retainerID { get; set; }
+            public string sellerID { get; set; }
+            public string listingID { get; set; }
         }
         public class RecentHistory
         {
-            public int pricePerUnit { get; set; }
+            public double pricePerUnit { get; set; }
             public int quantity { get; set; }
-            public int timestamp { get; set; }
-            public int total { get; set; }
+            public double timestamp { get; set; }
+            public double total { get; set; }
+            public string buyerName { get; set; }
+            public bool hq { get; set; }
         }
     }
 

@@ -10,75 +10,18 @@ namespace XIVMarketBoard_Api
     public class DbController
     {
 
-        public static async Task<Recipe> getRecipeFromName(string recipeName)
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Recipes.FirstOrDefaultAsync(r => r.Name == recipeName);
-            }
-            
-        }
-        public static async Task<Item> getItemFromName(String itemName)
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Items.FirstOrDefaultAsync(r => r.Name == itemName);
-            }            
-
-        }
-
-        public static async Task<MbPost> getMbPostFromItemId(int itemId)
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Posts.FirstOrDefaultAsync(r => r.Item.Id == itemId);
-            }
-            
-        }
-        public static async Task<List<Recipe>> getRecipiesById(List<int> recipeId)
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Recipes.Where(r => recipeId.Contains(r.Id)).ToListAsync();
-                
-            }
-        }
-        public static async Task<List<Recipe>> getAllRecipies()
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Set<Recipe>().ToListAsync();
-            }
-        }        
-        public static async Task<List<Item>> getAllItems()
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.Set<Item>().ToListAsync();
-            }
-
-        }
-
-        public static async Task<List<MbPost>> getMbPostsForItem(int itemId)
+        /*public static async Task<List<MbPost>> getMbPostsForItem(int itemId)
         {
             using (var xivContext = new XivDbContext())
             {
                 return await xivContext.Posts.Where(r => r.Item.Id == itemId).ToListAsync();
             }
+         rewrite to fetch latest universalisquery for item
+        }*/
 
-        }
 
-        public static async Task<UniversalisQuery> getLatestUniversalisQueryForItem(int itemId, int worldId)
-        {
-            using (var xivContext = new XivDbContext())
-            {
-                return await xivContext.UniversalisQueries
-                    .Include(a => a.posts.Take(10)).Include(b => b.postHistory.Take(10))
-                    .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync();
-            }
-        }
 
-        public static async Task<List<DataCenter>> saveDataCenters(List<DataCenter> dcList)
+        public static async Task<List<DataCenter>> SaveDataCenters(List<DataCenter> dcList)
         {
             using (var xivContext = new XivDbContext())
             {
@@ -95,7 +38,7 @@ namespace XIVMarketBoard_Api
                 return dcList;
             }
         }
-        public static async Task<List<World>> saveWorlds(List<World> worldList)
+        public static async Task<List<World>> SaveWorlds(List<World> worldList)
         {
             using (var xivContext = new XivDbContext())
             {
@@ -138,7 +81,7 @@ namespace XIVMarketBoard_Api
             return "successfully saved " + RecipeList.Count + "recipies";
 
         }
-        public static async Task<string> SaveRecipiesToDb(List<Recipe> RecipeList)
+        public static async Task<string> GetOrCreateRecipies(List<Recipe> RecipeList)
         {
             using (XivDbContext xivContext = new XivDbContext())
             {
@@ -169,6 +112,20 @@ namespace XIVMarketBoard_Api
             return "successfully saved " + RecipeList.Count + "recipies";
 
         }
+        private static async Task<Item> GetOrCreateItemFromContext(Item item, XivDbContext dbContext)
+        {
+
+            var tempItem = await dbContext.Items.FindAsync(item.Id);
+            if (tempItem == null)
+            {
+                dbContext.Add(item);
+                await dbContext.SaveChangesAsync();
+                return item;
+            }
+
+            return tempItem;
+        }
+
         private static async Task<Job> GetOrCreateJobFromContext(Job job, XivDbContext dbContext)
         {
             var tempJob = await dbContext.Jobs.FindAsync(job.Id);
@@ -181,18 +138,124 @@ namespace XIVMarketBoard_Api
 
             return tempJob;
         }
-        private static async Task<Item> GetOrCreateItemFromContext(Item item, XivDbContext dbContext)
+
+
+        #region universalis
+        public static async Task<UniversalisEntry> GetOrCreateUniversalisQuery(UniversalisEntry q)
         {
-            
-            var tempItem = await dbContext.Items.FindAsync(item.Id);
-            if (tempItem == null)
+            using (var xivContext = new XivDbContext())
             {
-                dbContext.Add(item);
-                await dbContext.SaveChangesAsync();
-                return item;
+                var universalisQuery = await xivContext.UniversalisEntries
+                    .FirstOrDefaultAsync(r => (
+                        r.Item.Id == q.Item.Id &&
+                        r.World.Id == q.World.Id &&
+                        r.LastUploadDate == q.LastUploadDate));
+                if (universalisQuery == null)
+                {
+                    List<MbPost> mbPostList = new List<MbPost>();
+                    foreach(MbPost mbPost in q.Posts)
+                    {
+                        mbPostList.Add(await GetOrCreateMbPost(mbPost, xivContext));
+                    }
+                    q.Posts = mbPostList;
+                    xivContext.UniversalisEntries.Add(q);
+                    await xivContext.SaveChangesAsync();
+                    return q; 
+                }
+                return universalisQuery;
             }
 
-            return tempItem;
         }
+        public static async Task<MbPost> GetOrCreateMbPost(MbPost tempMbPost, XivDbContext xivContext)
+        {
+
+                var mbPost = await xivContext.Posts.FirstOrDefaultAsync(r => r.Id == tempMbPost.Id);
+                if(mbPost == null)
+                {
+                    xivContext.Add(tempMbPost);
+                    await xivContext.SaveChangesAsync();
+                    return tempMbPost;
+                }
+                return mbPost;
+            
+            
+        }
+        public static async Task<UniversalisEntry> GetLatestUniversalisQueryForItem(int itemId, int worldId)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.UniversalisEntries
+                    .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
+                    .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync();
+            }
+        }
+        #endregion
+
+
+        #region getFromContext
+        public static World GetWorldFromName(string worldName)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return xivContext.Worlds.FirstOrDefault(r => r.Name == worldName);
+            }
+        }
+        public static async Task<Recipe> GetRecipeFromName(string recipeName)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Recipes.FirstOrDefaultAsync(r => r.Name == recipeName);
+            }
+
+        }
+        public static async Task<Item> GetItemFromNameAsync(string itemName)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Items.FirstOrDefaultAsync(r => r.Name == itemName);
+            }
+
+        }
+        public static Item GetItemFromId(int itemId)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return xivContext.Items.FirstOrDefault(r => r.Id == itemId);
+            }
+
+        }
+
+        /*public static async Task<MbPost> getMbPostFromItemId(int itemId)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Posts.FirstOrDefaultAsync(r => r.Item.Id == itemId);
+            }
+           TODO: Rewrite to fetch universalisquery 
+        }*/
+        public static async Task<List<Recipe>> GetRecipiesById(List<int> recipeId)
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Recipes.Where(r => recipeId.Contains(r.Id)).ToListAsync();
+
+            }
+        }
+        public static async Task<List<Recipe>> GetAllRecipies()
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Set<Recipe>().ToListAsync();
+            }
+        }
+        public static async Task<List<Item>> GetAllItems()
+        {
+            using (var xivContext = new XivDbContext())
+            {
+                return await xivContext.Set<Item>().ToListAsync();
+            }
+
+        }
+        #endregion
     }
 }
