@@ -52,8 +52,8 @@ namespace XIVMarketBoard_Api
 
                     }
                     var dcListDistinct = dcList.Distinct().ToList();
-                    var dcResult = await DbController.saveDataCenters(dcList);
-                    var worldResult = await DbController.saveWorlds(worldList);
+                    var dcResult = await DbController.SaveDataCenters(dcList);
+                    var worldResult = await DbController.SaveWorlds(worldList);
                     return "import of worlds successful";
                 }
                 else
@@ -107,7 +107,7 @@ namespace XIVMarketBoard_Api
             try
             {
                 var recipeList = await CreateRecipes(resultList);
-                await DbController.SaveRecipiesToDb(recipeList);
+                await DbController.GetOrCreateRecipies(recipeList);
                 
             }
             catch (Exception e) { return "error" + e.Message; }
