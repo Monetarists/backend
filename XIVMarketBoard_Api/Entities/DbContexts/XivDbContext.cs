@@ -7,8 +7,8 @@ using XIVMarketBoard_Api.Entities;
 
 namespace XIVMarketBoard_Api.Data
 {
-    
-    public class XivDbContext:DbContext
+
+    public class XivDbContext : DbContext
     {
         /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -26,32 +26,28 @@ namespace XIVMarketBoard_Api.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            {   
+            {
                 //optionsBuilder.UseSqlServer("Data Source=192.168.10.38,3306;initial catalog=XivMarketBoard;User ID=XivUser;Password=pot01atis;Trusted_Connection=false;");
                 optionsBuilder.UseMySql("Data Source=192.168.10.38,3306;initial catalog=XivMarketBoard;User ID=XivUser;Password=pot01atis;",
                 new MySqlServerVersion(new Version(8, 0, 11)));
             }
 
         }
-        public XivDbContext()
-        {
-        }
 
         public XivDbContext(DbContextOptions<XivDbContext> options)
             : base(options)
         {
         }
-        public XivDbContext(DbContextOptions options) : base(options) { }
-        public DbSet<Item> Items { get; set; }
-        public DbSet<Ingredient> Ingredients { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Recipe> Recipes { get; set; }
-        public DbSet<World> Worlds { get; set; }
-        public DbSet<DataCenter> DataCenters { get; set; }
-        public DbSet<Job> Jobs { get; set; }
-        public DbSet<Retainer> Retainers { get; set; }
-        public DbSet<MbPost> Posts { get; set; }
-        public DbSet<SaleHistory> SaleHistory { get; set; }
-        public DbSet<UniversalisEntry> UniversalisEntries { get; set; }
+        public DbSet<Item> Items => Set<Item>();
+        public DbSet<Ingredient> Ingredients => Set<Ingredient>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Recipe> Recipes => Set<Recipe>();
+        public DbSet<World> Worlds => Set<World>();
+        public DbSet<DataCenter> DataCenters => Set<DataCenter>();
+        public DbSet<Job> Jobs => Set<Job>();
+        public DbSet<Retainer> Retainers => Set<Retainer>();
+        public DbSet<MbPost> Posts => Set<MbPost>();
+        public DbSet<SaleHistory> SaleHistory => Set<SaleHistory>();
+        public DbSet<UniversalisEntry> UniversalisEntries => Set<UniversalisEntry>();
     }
 }

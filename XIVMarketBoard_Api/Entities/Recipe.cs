@@ -6,11 +6,11 @@ namespace XIVMarketBoard_Api.Entities
     {
         [Key]
         public int Id { get; set; }
-        public Item Item { get; set; }
+        public Item Item { get; set; } = new Item();
         public int AmountResult { get; set; }
-        public virtual List<Ingredient> Ingredients { get; set; }
-        public string Name { get; set; }
-        public virtual Job job { get; set; }
+        public virtual ICollection<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
+        public string Name { get; set; } = "";
+        public virtual Job job { get; set; } = new Job();
     }
 }
 

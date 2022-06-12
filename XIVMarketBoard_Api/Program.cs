@@ -1,6 +1,9 @@
 using Microsoft.OpenApi.Models;
-using XIVMarketBoard_Api;
+using XIVMarketBoard_Api.Data;
 using Newtonsoft.Json;
+using XIVMarketBoard_Api.Controller;
+using XIVMarketBoard_Api.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -36,7 +39,12 @@ builder.Services.AddSwaggerGen(c =>
       new List<string>()
     }});
 });
-
+builder.Services.AddTransient<IUniversalisApiController, UniversalisApiController>();
+builder.Services.AddTransient<IXivApiController, XivApiController>();
+builder.Services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
+builder.Services.AddTransient<IXivApiRepository, XivApiRepository>();
+builder.Services.AddTransient<IDbController, DbController>();
+builder.Services.AddDbContext<XivDbContext>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -50,21 +58,27 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.MapGet("/importWorlds", () =>
+app.MapGet("/importWorlds", (IXivApiController xivApiController) =>
 {
-    var worlds = XIVApiController.ImportAllWorldsAndDataCenters();
+    
+    var worlds = xivApiController.ImportAllWorldsAndDataCenters();
 
     return JsonConvert.SerializeObject(worlds.Result);
 })
 .WithName("getWorlds");
 
-app.MapGet("/importItemEntry", (int Itemid, string WorldName, string entries, string listings) =>
+app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
 {
 
-    var world = DbController.GetWorldFromName(WorldName);
-    var item = DbController.GetItemFromId(Itemid);
-    var result = UniversalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
+    var world = dbController.GetWorldFromName(WorldName);
+    var item = dbController.GetItemFromId(Itemid);
+    if (world != null && item != null)
+    {
+        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
+        return JsonConvert.SerializeObject(result);
+    }
     
+
     return "";
 })
 .WithName("importItemEntry");
@@ -72,36 +86,10 @@ app.MapGet("/importItemEntry", (int Itemid, string WorldName, string entries, st
 app.MapGet("/getAllRecipiesAsync", () =>
 {
 
-    var recipies = XIVApiController.resetAndImportRecipiesAndItems();
-
-    return JsonConvert.SerializeObject(recipies.Result);
+    //var recipies = XivApiController.resetAndImportRecipiesAndItems();
+    return "";
+    //return JsonConvert.SerializeObject(recipies.Result);
 })
 .WithName("Import All Recipies From XIV Api Async");
 //app.Urls.Add("https://localhost:1923");
 app.Run();
-
-
-/*
- 
- 
-  {
-    "indexes": "recipe",
-    "page": "1",
-    "columns": "ID,Name,UrlType",
-    "body": {
-        "query": {
-            "bool": {
-                "must": [
-                    {
-                        "wildcard": {
-                            "Name_en": "*"
-                        }
-                    }
-                ]
-            }
-        },
-        "from": 2,
-        "size": 1
-    }
-}
- */
