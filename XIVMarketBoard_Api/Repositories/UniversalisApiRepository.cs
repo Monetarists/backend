@@ -7,6 +7,7 @@ namespace XIVMarketBoard_Api.Repositories
         Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string hq, string world, int listings, int entries);
         DateTime UnixTimeStampToDateTimeSeconds(double unixTimeStamp);
         DateTime UnixTimeStampToDateTimeMilliSeconds(double unixTimeStamp);
+        Task<HttpResponseMessage> GetUniversalisListMarketableItems();
     }
 
     public class UniversalisApiRepository : IUniversalisApiRepository
@@ -22,7 +23,12 @@ namespace XIVMarketBoard_Api.Repositories
             var response = await SendRequestAsync(requestAddress);
             return response;
         }
-
+        public async Task<HttpResponseMessage> GetUniversalisListMarketableItems()
+        {
+            var requestAddress = baseAddress + "marketable";
+            var response = await SendRequestAsync(requestAddress);
+            return response;
+        }
 
         public DateTime UnixTimeStampToDateTimeMilliSeconds(double unixTimeStamp)
         {

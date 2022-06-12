@@ -19,6 +19,7 @@ namespace XIVMarketBoard_Api.Controller
         Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world);
         Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
+        Task<string> ImportMarketableItems();
 
     }
 
@@ -32,7 +33,28 @@ namespace XIVMarketBoard_Api.Controller
             _dbController = dbController;
             _universalisApiRepository = universalisApiRepositiorry;
         }
+        public async Task<string> ImportMarketableItems()
+        {
+            
+            var response = await _universalisApiRepository.GetUniversalisListMarketableItems();
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var res = await response.Content.ReadAsStringAsync();
+                    var items = _dbController.GetItemsByIds(JsonConvert.DeserializeObject<List<int>>(res)).ToListAsync().Result;
+                    items.ForEach(item => item.IsMarketable = true);
 
+                    return await _dbController.UpdateItems(items);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
+                }
+
+            }
+            else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+        }
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings)
         {
 
