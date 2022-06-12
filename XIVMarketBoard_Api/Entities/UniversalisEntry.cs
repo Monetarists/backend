@@ -6,12 +6,12 @@ namespace XIVMarketBoard_Api.Entities
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        public Item Item { get; set; }
-        public World World { get; set; }
+        public Item Item { get; set; } = new Item();
+        public World World { get; set; } = new World();
         public DateTime LastUploadDate { get; set; }
         public DateTime QueryDate { get; set; }
-        public List<MbPost> Posts { get; set; }
-        public List<SaleHistory> SaleHistory { get; set; }
+        public virtual ICollection<MbPost> Posts { get; set; } = new List<MbPost>();
+        public virtual ICollection<SaleHistory> SaleHistory { get; set; } = new List<SaleHistory>();
         public double CurrentAveragePrice { get; set; }
         public double CurrentAveragePrinceNQ { get; set; }
         public double CurrentAveragePriceHQ { get; set; }

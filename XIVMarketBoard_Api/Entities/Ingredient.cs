@@ -9,6 +9,6 @@ namespace XIVMarketBoard_Api.Entities
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int Amount { get; set; }
-        public Item Item { get; set; }
+        public Item Item { get; set; } = new Item();
     }
 }
