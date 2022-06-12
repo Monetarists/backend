@@ -15,10 +15,11 @@ namespace XIVMarketBoard_Api.Controller
         IEnumerable<MbPost> CreateMbPostEntries(IEnumerable<UniversalisListings> listings);
         IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> listings);
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
-        Task<string> ImportForAllItemsOnWorld(World world);
+        Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
         Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world);
         Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
+
     }
 
     public class UniversalisApiController : IUniversalisApiController
@@ -58,16 +59,60 @@ namespace XIVMarketBoard_Api.Controller
             }
             else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
         }
-        public async Task<string> ImportForAllItemsOnWorld(World world)
+        public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
-            var itemList = _dbController.GetAllItems();
-            await foreach (var item in itemList)
+            try
             {
-                var result = await _universalisApiRepository.GetUniversalisEntryForItems(new List<string>() { item.Id.ToString() }, "", world.Name, 5, 5);
+                List<UniversalisEntry> uniList = new List<UniversalisEntry>();
+                var itemList = _dbController.GetAllItems().ToListAsync().Result;
+                
+                for(var amount = 0;  itemList.Count() >= amount; amount += 100)
+                {
+
+                    var itemColl =  itemList.Skip(amount).Take(100);
+                    var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        try
+                        {
+                            var res = await response.Content.ReadAsStringAsync();
+                            var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
+                            if (parsedResult == null)
+                            {
+                                throw new NullReferenceException();
+                            }
+                            foreach(var i in parsedResult.items)
+                            {
+                                var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
+                                uniList.Add(CreateUniversalisEntry(i, world, a));
+                            }
+                            //uniList.AddRange(itemColl.Select(i => CreateUniversalisEntry(parsedResult.items.Where(a => a.itemId == i.Id.ToString()).First(), world, i)));
+
+                        }
+                        catch (Exception e)
+                        {
+                            throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
+                        }
+
+                    }
+                    else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+                    await Task.Delay(80);
+                    amount += 100;
+                }
+
+                var result = await _dbController.GetOrCreateUniversalisQueries(uniList);
+                //uniList.ForEach(async i => i = await _dbController.GetOrCreateUniversalisQuery(i));
+
+                return "Imported all items on world " + world.Name;
+                
+            }
+            
+            catch (Exception e)
+            {
+                throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
             }
 
 
-            return "";
         }
         public async Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world)
         {
@@ -97,7 +142,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 Item = item, // item.item;
                 World = world,
-                LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTime(responseItem.lastUploadTime),
+                LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTimeMilliSeconds(responseItem.lastUploadTime),
                 QueryDate = DateTime.Now,
                 Posts = CreateMbPostEntries(responseItem.listings).ToList(), // list listings
                 SaleHistory = CreateSaleHistoryEntries(responseItem.recentHistory).ToList(), //list recentHistory
@@ -130,7 +175,7 @@ namespace XIVMarketBoard_Api.Controller
                 Price = i.pricePerUnit,
                 Amount = i.quantity,
                 TotalAmount = i.total,
-                LastReviewDate = _universalisApiRepository.UnixTimeStampToDateTime(i.lastReviewTime)
+                LastReviewDate = _universalisApiRepository.UnixTimeStampToDateTimeSeconds(i.lastReviewTime)
             });
 
 
@@ -139,7 +184,7 @@ namespace XIVMarketBoard_Api.Controller
                 new SaleHistory ()
                 {
                     Quantity = i.quantity,
-                    SaleDate = _universalisApiRepository.UnixTimeStampToDateTime(i.timestamp),
+                    SaleDate = _universalisApiRepository.UnixTimeStampToDateTimeSeconds(i.timestamp),
                     Total = i.total,
                     BuyerName = i.buyerName,
                     HighQuality = i.hq

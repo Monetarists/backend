@@ -5,6 +5,10 @@ using System.Text;
 using XIVMarketBoard_Api.Data;
 using System;
 using Microsoft.EntityFrameworkCore;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Linq;
+
 
 namespace XIVMarketBoard_Api.Controller
 {
@@ -18,12 +22,15 @@ namespace XIVMarketBoard_Api.Controller
         Task<MbPost> GetOrCreateMbPost(MbPost tempMbPost, XivDbContext _xivContext);
         Task<string> GetOrCreateRecipies(IEnumerable<Recipe> RecipeList);
         Task<UniversalisEntry> GetOrCreateUniversalisQuery(UniversalisEntry q);
+        Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
         Task<Recipe?> GetRecipeFromName(string recipeName);
         IAsyncEnumerable<Recipe> GetRecipiesById(List<int> recipeId);
         World? GetWorldFromName(string worldName);
         Task<string> ResetAndSaveRecipiesToDb(IEnumerable<Recipe> RecipeList);
         Task<IEnumerable<DataCenter>> SaveDataCenters(IEnumerable<DataCenter> dcList);
         Task<IEnumerable<World>> SaveWorlds(IEnumerable<World> worldList);
+        IAsyncEnumerable<Recipe> GetAllRecipiesIncludeItems();
+        Task<string> SetCraftableItemsFromRecipes();
     }
 
     public class DbController : IDbController
@@ -43,6 +50,33 @@ namespace XIVMarketBoard_Api.Controller
             
          rewrite to fetch latest universalisquery for item
         }*/
+        public async Task<string> SetCraftableItemsFromRecipes()
+        {
+
+            try
+            {
+                var recipeColl = GetAllRecipiesIncludeItems();
+                //_xivContext.UpdateRange(recipeColl);
+                await foreach (var r in recipeColl)
+                {
+                    r.Item.CanBeCrafted = true;
+                    //todo crashes Cannot access a disposed object.
+                }
+                //var updatedRecipies = await recipies.ToListAsync();
+                
+                
+                
+                //await recipeColl.ForEachAsync(i => i.Item.CanBeCrafted = true);
+                //_xivContext.Update(recipies);
+                await _xivContext.SaveChangesAsync();
+                return "updated recipies";
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        
+        }
 
         public async Task<IEnumerable<DataCenter>> SaveDataCenters(IEnumerable<DataCenter> dcList)
         {
@@ -91,8 +125,9 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item);
                 }
-                recipe.Item.CanBeCrafted = true;
+
                 recipe.Item = await GetOrCreateItemFromContext(recipe.Item);
+                recipe.Item.CanBeCrafted = true;
                 recipe.job = await GetOrCreateJobFromContext(recipe.job);
                 _xivContext.Add(recipe);
             }
@@ -102,6 +137,7 @@ namespace XIVMarketBoard_Api.Controller
             return "successfully saved " + RecipeList.Count() + "recipies";
 
         }
+        
         public async Task<string> GetOrCreateRecipies(IEnumerable<Recipe> RecipeList)
         {
 
@@ -114,8 +150,12 @@ namespace XIVMarketBoard_Api.Controller
                     {
                         ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item);
                     }
-                    recipe.Item.CanBeCrafted = true;
+                    
                     recipe.Item = await GetOrCreateItemFromContext(recipe.Item);
+                    if (recipe.Item.CanBeCrafted != true)
+                    {
+                        recipe.Item.CanBeCrafted = true;
+                    }
                     recipe.job = await GetOrCreateJobFromContext(recipe.job);
                     _xivContext.Add(recipe);
                 }
@@ -173,12 +213,14 @@ namespace XIVMarketBoard_Api.Controller
             {
                 q.Item = await _xivContext.Items.FindAsync(q.Item.Id) ?? new();
                 q.World = await _xivContext.Worlds.FindAsync(q.World.Id) ?? new();
-                List<MbPost> mbPostList = new List<MbPost>();
+                /* obsolete due to bug in universalis api
+                List<MbPost> mbPostList = new List<MbPost>();                
                 foreach (MbPost mbPost in q.Posts)
                 {
                     mbPostList.Add(await GetOrCreateMbPost(mbPost, _xivContext));
                 }
                 q.Posts = mbPostList;
+                */
                 _xivContext.UniversalisEntries.Add(q);
                 await _xivContext.SaveChangesAsync();
                 return q;
@@ -187,6 +229,35 @@ namespace XIVMarketBoard_Api.Controller
 
 
         }
+        public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
+        {
+            foreach (var q in qList) { 
+                var universlisEntry = await _xivContext.UniversalisEntries
+                    .FirstOrDefaultAsync(r =>
+                        r.Item.Id == q.Item.Id &&
+                        r.World.Id == q.World.Id &&
+                        r.LastUploadDate == q.LastUploadDate);
+                if (universlisEntry == null)
+                {
+                    q.Item = await _xivContext.Items.FindAsync(q.Item.Id) ?? new();
+                    q.World = await _xivContext.Worlds.FindAsync(q.World.Id) ?? new();
+                    /* obsolete due to bug in universalis api
+                    List<MbPost> mbPostList = new List<MbPost>();
+                    foreach (MbPost mbPost in q.Posts)
+                    {
+                        mbPostList.Add(await CreateMbPost(mbPost, _xivContext));
+                    }
+                    q.Posts = mbPostList;*/
+                    _xivContext.UniversalisEntries.Add(q);
+                } 
+            }
+            await _xivContext.SaveChangesAsync();
+            return qList;
+
+
+        }
+
+        //obsolete due to bug in universalis api
         public async Task<MbPost> GetOrCreateMbPost(MbPost tempMbPost, XivDbContext _xivContext)
         {
 
@@ -233,13 +304,13 @@ namespace XIVMarketBoard_Api.Controller
             
            TODO: Rewrite to fetch universalisquery 
         }*/
+        
         public IAsyncEnumerable<Recipe> GetRecipiesById(List<int> recipeId) => _xivContext.Recipes.Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
 
 
 
         public IAsyncEnumerable<Recipe> GetAllRecipies() => _xivContext.Set<Recipe>().AsAsyncEnumerable();
-
-
+        public IAsyncEnumerable<Recipe> GetAllRecipiesIncludeItems() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
         public IAsyncEnumerable<Item> GetAllItems() => _xivContext.Set<Item>().AsAsyncEnumerable();
 
 
