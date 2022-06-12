@@ -5,7 +5,8 @@ namespace XIVMarketBoard_Api.Repositories
     public interface IUniversalisApiRepository
     {
         Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string hq, string world, int listings, int entries);
-        DateTime UnixTimeStampToDateTime(double unixTimeStamp);
+        DateTime UnixTimeStampToDateTimeSeconds(double unixTimeStamp);
+        DateTime UnixTimeStampToDateTimeMilliSeconds(double unixTimeStamp);
     }
 
     public class UniversalisApiRepository : IUniversalisApiRepository
@@ -23,11 +24,18 @@ namespace XIVMarketBoard_Api.Repositories
         }
 
 
-        public DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        public DateTime UnixTimeStampToDateTimeMilliSeconds(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+            return dateTime;
+        }
+        public DateTime UnixTimeStampToDateTimeSeconds(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dateTime;
         }
         private async Task<HttpResponseMessage> SendRequestAsync(string endpoint)

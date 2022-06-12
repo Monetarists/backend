@@ -3,6 +3,10 @@ using Newtonsoft.Json;
 using System.Net;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Linq;
+
 
 namespace XIVMarketBoard_Api.Controller
 {
@@ -10,7 +14,7 @@ namespace XIVMarketBoard_Api.Controller
     {
         string GetAllRecipies();
         Task<string> ImportAllWorldsAndDataCenters();
-        Task<string> ResetAndImportRecipiesAndItems();
+        Task<string> ImportRecipiesAndItems();
     }
 
     public class XivApiController : IXivApiController
@@ -87,39 +91,42 @@ namespace XIVMarketBoard_Api.Controller
             {
                 return "error: " + e.Message;
             }
-
-
-
-
-
         }
-        public async Task<string> ResetAndImportRecipiesAndItems()
+        public async Task<string> ImportRecipiesAndItems()
         {
-            int start = 0;
+            //int start = 0;
             int amount = 500;
-            int responseAmount = 1;
             int resultsNumber = 0;
             string resultString = "";
             var resultList = new List<XivApiResult>();
             string contentString;
-
-            while (responseAmount > resultsNumber)
+            
+            for (int start = 0; resultsNumber >= start; start += amount)
             {
                 var httpResponse = await _xivApiRepository.GetRecipesAsync(start, amount);
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
                     contentString = await httpResponse.Content.ReadAsStringAsync();
-                    var responseResults = JsonConvert.DeserializeObject<XivApiResponeResults>(contentString);
-                    if(responseResults != null)
+                    try
                     {
-                        resultList.AddRange(responseResults.Results);
-                        if (resultsNumber == 0)
+                        var responseResults = JsonConvert.DeserializeObject<XivApiResponeResults>(contentString);
+
+                        if (responseResults != null)
                         {
-                            resultsNumber = responseResults.Pagination.Results;
+                            resultList.AddRange(responseResults.Results);
+                            if (resultsNumber == 0)
+                            {
+                                resultsNumber = responseResults.Pagination.ResultsTotal;
+                            }
+                            //start += amount;
+                            await Task.Delay(100);
                         }
-                        start += amount;
-                        await Task.Delay(100);
                     }
+                    catch (Exception e)
+                    {
+                        return "error: " + e.Message;
+                    }
+
                 }
 
                 else
@@ -149,22 +156,22 @@ namespace XIVMarketBoard_Api.Controller
                 job = new Job { Id = r.ClassJob.Id, Name = r.ClassJob.Name_en },
                 Id = r.Id,
                 Name = r.Name,
-                Item = new Item { Id = r.ItemResult.Id, Name = r.ItemResult.Name },
+                Item = new Item { Id = r.ItemResult.Id.Value, Name = r.ItemResult.Name },
                 AmountResult = r.AmountResult
             });
 
         private static IEnumerable<Ingredient> CreateIngredientList(XivApiResult r)
         {
-            if (r.AmountIngredient0 > 0) yield return (new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id, Name = r.ItemIngredient0.Name } });
-            if (r.AmountIngredient1 > 0) yield return (new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id, Name = r.ItemIngredient1.Name } });
-            if (r.AmountIngredient2 > 0) yield return (new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id, Name = r.ItemIngredient2.Name } });
-            if (r.AmountIngredient3 > 0) yield return (new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id, Name = r.ItemIngredient3.Name } });
-            if (r.AmountIngredient4 > 0) yield return (new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id, Name = r.ItemIngredient4.Name } });
-            if (r.AmountIngredient5 > 0) yield return (new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id, Name = r.ItemIngredient5.Name } });
-            if (r.AmountIngredient6 > 0) yield return (new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id, Name = r.ItemIngredient6.Name } });
-            if (r.AmountIngredient7 > 0) yield return (new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id, Name = r.ItemIngredient7.Name } });
-            if (r.AmountIngredient8 > 0) yield return (new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id, Name = r.ItemIngredient8.Name } });
-            if (r.AmountIngredient9 > 0) yield return (new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id, Name = r.ItemIngredient9.Name } });
+            if (r.ItemIngredient0.Id != null) yield return new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id.Value, Name = r.ItemIngredient0.Name } };
+            if (r.ItemIngredient1.Id != null) yield return new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id.Value, Name = r.ItemIngredient1.Name } };
+            if (r.ItemIngredient2.Id != null) yield return new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id.Value, Name = r.ItemIngredient2.Name } };
+            if (r.ItemIngredient3.Id != null) yield return new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id.Value, Name = r.ItemIngredient3.Name } };
+            if (r.ItemIngredient4.Id != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id.Value, Name = r.ItemIngredient4.Name } };
+            if (r.ItemIngredient5.Id != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id.Value, Name = r.ItemIngredient5.Name } };
+            if (r.ItemIngredient6.Id != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id.Value, Name = r.ItemIngredient6.Name } };
+            if (r.ItemIngredient7.Id != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id.Value, Name = r.ItemIngredient7.Name } };
+            if (r.ItemIngredient8.Id != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id.Value, Name = r.ItemIngredient8.Name } };
+            if (r.ItemIngredient9.Id != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id.Value, Name = r.ItemIngredient9.Name } };
         }
 
         public string GetAllRecipies()
