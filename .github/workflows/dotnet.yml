@@ -23,8 +23,7 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: Adding Known Hosts
-      run: ssh-keyscan -H ${{ secrets.UNRAID_HOST }} >> ~/.ssh/known_hosts 
+
           
     - name: Install SSH Key
         # You may pin to the exact commit or the version.
@@ -37,3 +36,5 @@ jobs:
         name: 'gitub_key'
           # public keys of SSH servers
         known_hosts:  'placeholder'
+    - name: Adding Known Hosts
+      run: ssh-keyscan -H ${{ secrets.UNRAID_HOST }} >> ~/.ssh/known_hosts 
