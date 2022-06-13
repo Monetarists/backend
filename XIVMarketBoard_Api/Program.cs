@@ -67,6 +67,15 @@ app.MapGet("/importWorlds", (IXivApiController xivApiController) =>
 })
 .WithName("getWorlds");
 
+app.MapGet("/importRecipies", async  (IXivApiController xivApiController) =>
+{
+
+    var worlds = await xivApiController.ImportRecipiesAndItems();
+
+    return "";
+})
+.WithName("importRecipies");
+
 app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
 {
 
@@ -83,6 +92,19 @@ app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries,
 })
 .WithName("importItemEntry");
 
+app.MapGet("/importAllItemForWorld", async (IUniversalisApiController universalisApiController, IDbController dbController) =>
+{
+
+    var world = dbController.GetWorldFromName("Twintania");
+    if (world != null)
+    {
+        return await universalisApiController.ImportUniversalisDataForAllItemsOnWorld(world);
+    }
+
+
+    return "";
+})
+.WithName("importAllItemForWorld");
 app.MapGet("/getAllRecipiesAsync", () =>
 {
 
@@ -91,5 +113,23 @@ app.MapGet("/getAllRecipiesAsync", () =>
     //return JsonConvert.SerializeObject(recipies.Result);
 })
 .WithName("Import All Recipies From XIV Api Async");
+
+app.MapGet("/updateItemsCrafted", async  (IXivApiController xivApiController, IDbController dbController) =>
+{
+
+    var result = await dbController.SetCraftableItemsFromRecipes();
+    return "";
+    //return JsonConvert.SerializeObject(recipies.Result);
+})
+.WithName("update items crafted");
+
+app.MapGet("/GetMarketableItems", async (IUniversalisApiController universalisApiController) =>
+{
+
+    var result = await universalisApiController.ImportMarketableItems();
+    return "";
+    //return JsonConvert.SerializeObject(recipies.Result);
+}).WithName("GetMarketableItems");
+
 //app.Urls.Add("https://localhost:1923");
 app.Run();
