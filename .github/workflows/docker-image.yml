@@ -45,6 +45,6 @@ jobs:
           file: ./XIVMarketBoard_Api/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/XIVMarketBoard_Api:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/XIVMarketBoard_Api:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/XIVMarketBoard_Api:buildcache,mode=max
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/xivmarketboard_api:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/xivmarketboard_api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/xivmarketboard_api:buildcache,mode=max
