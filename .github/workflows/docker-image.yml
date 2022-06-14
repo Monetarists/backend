@@ -31,6 +31,11 @@ jobs:
         # Password or personal access token used to log against the Docker registry
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
         
+    - name: Docker Setup Buildx
+      # You may pin to the exact commit or the version.
+      # uses: docker/setup-buildx-action@dc7b9719a96d48369863986a06765841d7ea23f6
+      uses: docker/setup-buildx-action@v2.0.0
+      
     - name: Build and push
       # You may pin to the exact commit or the version.
       # uses: docker/build-push-action@e551b19e49efd4e98792db7592c17c09b89db8d8
