@@ -57,13 +57,43 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapGet("/getAllItemNames", async (IDbController dbController) =>
+{ 
+    return JsonConvert.SerializeObject(await dbController.GetAllItems().ToListAsync());
+})
+.WithName("getAllItemNames");
 
-app.MapGet("/importWorlds", (IXivApiController xivApiController) =>
+
+
+app.MapGet("/getRecipeAndSubRecipes", async (IDbController dbController, string recipeName) =>
+{
+
+    var result = await dbController.GetRecipeFromNameIncludeIngredients(recipeName);
+    if (result != null)
+    {
+        var nameList = result.Ingredients.Select(i => i.Item.Name).ToList();
+        var subRecipeList = dbController.GetRecipesFromNameCollIncludeIngredients(nameList);
+    }
+    
+    //fixa reply som har recipe/item -> ingredients -> recipes/items
+    //troligen är best practise att skapa ett gäng models och jsonkoda dom
+    return "";
+})
+.WithName("getRecipeAndSubRecipes");
+
+app.MapGet("/marketboard-entries", async (IDbController dbController, IEnumerable<string> itemNames, string worldName) =>
+{
+    return await dbController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync(); ;
+})
+.WithName("getRecipeAndSubRecipes");
+
+
+app.MapGet("/importWorlds", async (IXivApiController xivApiController) =>
 {
     
-    var worlds = xivApiController.ImportAllWorldsAndDataCenters();
+    var result = await xivApiController.ImportAllWorldsAndDataCenters();
 
-    return JsonConvert.SerializeObject(worlds.Result);
+    return result;
 })
 .WithName("getWorlds");
 
@@ -79,8 +109,9 @@ app.MapGet("/importRecipies", async  (IXivApiController xivApiController) =>
 app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
 {
 
-    var world = dbController.GetWorldFromName(WorldName);
-    var item = dbController.GetItemFromId(Itemid);
+    var world = await dbController.GetWorldFromName(WorldName);
+    var item = await dbController.GetItemFromId(Itemid);
+
     if (world != null && item != null)
     {
         var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
@@ -95,7 +126,7 @@ app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries,
 app.MapGet("/importAllItemForWorld", async (IUniversalisApiController universalisApiController, IDbController dbController) =>
 {
 
-    var world = dbController.GetWorldFromName("Twintania");
+    var world = await dbController.GetWorldFromName("Twintania");
     if (world != null)
     {
         return await universalisApiController.ImportUniversalisDataForAllItemsOnWorld(world);
