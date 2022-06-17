@@ -63,9 +63,16 @@ app.MapGet("/getAllItemNames", async (IDbController dbController) =>
 })
 .WithName("getAllItemNames");
 
+app.MapGet("/all-recipies", () =>
+{
 
+    //var recipies = XivApiController.resetAndImportRecipiesAndItems();
+    return "";
+    //return JsonConvert.SerializeObject(recipies.Result);
+})
+.WithName("get all recipies from db");
 
-app.MapGet("/getRecipeAndSubRecipes", async (IDbController dbController, string recipeName) =>
+app.MapGet("/recipe-by-name", async (IDbController dbController, string recipeName) =>
 {
 
     var result = await dbController.GetRecipeFromNameIncludeIngredients(recipeName);
@@ -79,34 +86,36 @@ app.MapGet("/getRecipeAndSubRecipes", async (IDbController dbController, string 
     //troligen är best practise att skapa ett gäng models och jsonkoda dom
     return "";
 })
-.WithName("getRecipeAndSubRecipes");
+.WithName("get recipe and items");
 
 app.MapGet("/marketboard-entries", async (IDbController dbController, IEnumerable<string> itemNames, string worldName) =>
 {
     return await dbController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync(); ;
 })
-.WithName("getRecipeAndSubRecipes");
+.WithName("get marketboard entries for item");
 
 
-app.MapGet("/importWorlds", async (IXivApiController xivApiController) =>
-{
-    
-    var result = await xivApiController.ImportAllWorldsAndDataCenters();
 
-    return result;
-})
-.WithName("getWorlds");
-
-app.MapGet("/importRecipies", async  (IXivApiController xivApiController) =>
+app.MapPut("/import-all-recipes", async  (IXivApiController xivApiController) =>
 {
 
     var worlds = await xivApiController.ImportRecipiesAndItems();
 
     return "";
 })
-.WithName("importRecipies");
+.WithName("import all recipes");
 
-app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
+
+app.MapPut("/importWorlds", async (IXivApiController xivApiController) =>
+{
+
+    var result = await xivApiController.ImportAllWorldsAndDataCenters();
+
+    return result;
+})
+.WithName("import worlds");
+
+app.MapPut("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
 {
 
     var world = await dbController.GetWorldFromName(WorldName);
@@ -121,31 +130,24 @@ app.MapGet("/importItemEntry", async (int Itemid, string WorldName, int entries,
 
     return "";
 })
-.WithName("importItemEntry");
+.WithName("import item entry");
 
-app.MapGet("/importAllItemForWorld", async (IUniversalisApiController universalisApiController, IDbController dbController) =>
+app.MapPut("/import-items-for-world", async (IUniversalisApiController universalisApiController, IDbController dbController, string worldName) =>
 {
 
-    var world = await dbController.GetWorldFromName("Twintania");
+    var world = await dbController.GetWorldFromName(worldName);
     if (world != null)
     {
         return await universalisApiController.ImportUniversalisDataForAllItemsOnWorld(world);
     }
 
 
-    return "";
+    return "error world not found";
 })
-.WithName("importAllItemForWorld");
-app.MapGet("/getAllRecipiesAsync", () =>
-{
+.WithName("import items for world");
 
-    //var recipies = XivApiController.resetAndImportRecipiesAndItems();
-    return "";
-    //return JsonConvert.SerializeObject(recipies.Result);
-})
-.WithName("Import All Recipies From XIV Api Async");
 
-app.MapGet("/updateItemsCrafted", async  (IXivApiController xivApiController, IDbController dbController) =>
+app.MapPut("/set-crafted-on-items", async  (IXivApiController xivApiController, IDbController dbController) =>
 {
 
     var result = await dbController.SetCraftableItemsFromRecipes();
@@ -154,13 +156,13 @@ app.MapGet("/updateItemsCrafted", async  (IXivApiController xivApiController, ID
 })
 .WithName("update items crafted");
 
-app.MapGet("/GetMarketableItems", async (IUniversalisApiController universalisApiController) =>
+app.MapPut("/import-marketstatus-items", async (IUniversalisApiController universalisApiController) =>
 {
 
     var result = await universalisApiController.ImportMarketableItems();
     return "";
     //return JsonConvert.SerializeObject(recipies.Result);
-}).WithName("GetMarketableItems");
+}).WithName("import marketable status for items");
 
 //app.Urls.Add("https://localhost:1923");
 app.Run();
