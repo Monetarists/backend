@@ -3,6 +3,7 @@ using XIVMarketBoard_Api.Data;
 using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
 using XIVMarketBoard_Api.Repositories;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer"
     });
+    
     c.AddSecurityRequirement(new OpenApiSecurityRequirement()
   {
     {
@@ -39,6 +41,7 @@ builder.Services.AddSwaggerGen(c =>
       new List<string>()
     }});
 });
+
 builder.Services.AddTransient<IUniversalisApiController, UniversalisApiController>();
 builder.Services.AddTransient<IXivApiController, XivApiController>();
 builder.Services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
@@ -48,13 +51,18 @@ builder.Services.AddDbContext<XivDbContext>();
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+    app.UseHttpsRedirection();
 }
 
-//app.UseHttpsRedirection();
+
 
 app.MapGet("/getAllItemNames", async (IDbController dbController) =>
 { 

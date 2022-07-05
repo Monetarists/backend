@@ -22,13 +22,18 @@ namespace XIVMarketBoard_Api.Data
                 optionsBuilder.UseSqlServer(connectionString);
             }
         }*/
-        private const string connectionString = "server=localhost;port=3306;database=EFCoreMySQL;user=root;password=root";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //optionsBuilder.UseSqlServer("Data Source=192.168.10.38,3306;initial catalog=XivMarketBoard;User ID=XivUser;Password=pot01atis;Trusted_Connection=false;");
-                optionsBuilder.UseMySql("Data Source=192.168.10.38,3306;initial catalog=XivMarketBoard;User ID=XivUser;Password=pot01atis;",
+                IConfigurationRoot configuration = new ConfigurationBuilder()
+                   .SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("appsettings.json")
+                   .AddEnvironmentVariables("ASPNETCORE_")
+                   .Build();
+                var connectionString = configuration.GetConnectionString("XivDbConnectionString");
+
+                optionsBuilder.UseMySql(connectionString,
                 new MySqlServerVersion(new Version(8, 0, 11)));
             }
 
