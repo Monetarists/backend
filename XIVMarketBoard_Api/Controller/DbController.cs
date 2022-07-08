@@ -231,6 +231,7 @@ namespace XIVMarketBoard_Api.Controller
             var tempItem = await _xivContext.Items.FindAsync(item.Id);
             if (tempItem == null)
             {
+                item.IsMarketable = false;
                 _xivContext.Add(item);
                 await _xivContext.SaveChangesAsync();
                 return item;
