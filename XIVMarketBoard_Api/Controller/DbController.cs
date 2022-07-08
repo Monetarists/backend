@@ -198,6 +198,10 @@ namespace XIVMarketBoard_Api.Controller
                     foreach (var ingredient in recipe.Ingredients)
                     {
                         ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item);
+                        if(ingredient.Item.CanBeCrafted == null)
+                        {
+                            ingredient.Item.CanBeCrafted = false;
+                        }
                     }
                     
                     recipe.Item = await GetOrCreateItemFromContext(recipe.Item);
