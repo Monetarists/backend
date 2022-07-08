@@ -96,14 +96,14 @@ namespace XIVMarketBoard_Api.Controller
         {
             //int start = 0;
             int amount = 500;
-            int resultsNumber = 0;
+            int resultsTotal = 0;
             string resultString = "";
             var resultList = new List<XivApiResult>();
             string contentString;
             
-            for (int start = 0; resultsNumber >= start; start += amount)
+            for (int i = 0; resultsTotal >= i; i += amount)
             {
-                var httpResponse = await _xivApiRepository.GetRecipesAsync(start, amount);
+                var httpResponse = await _xivApiRepository.GetRecipesAsync(i, amount);
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
                     contentString = await httpResponse.Content.ReadAsStringAsync();
@@ -114,9 +114,9 @@ namespace XIVMarketBoard_Api.Controller
                         if (responseResults != null)
                         {
                             resultList.AddRange(responseResults.Results);
-                            if (resultsNumber == 0)
+                            if (resultsTotal == 0)
                             {
-                                resultsNumber = responseResults.Pagination.ResultsTotal;
+                                resultsTotal = responseResults.Pagination.ResultsTotal;
                             }
                             //start += amount;
                             await Task.Delay(100);
@@ -140,6 +140,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 var recipeList = CreateRecipes(resultList);
                 await _dbController.GetOrCreateRecipies(recipeList);
+
 
             }
             catch (Exception e) { return "error" + e.Message; }

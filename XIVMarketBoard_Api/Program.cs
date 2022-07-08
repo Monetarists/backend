@@ -1,14 +1,24 @@
 using Microsoft.OpenApi.Models;
 using XIVMarketBoard_Api.Data;
+using XIVMarketBoard_Api.Repositories;
 using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
-using XIVMarketBoard_Api.Repositories;
+using XIVMarketBoard_Api.Repositories.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+                      {
+                          policy.WithOrigins("*")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                      });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -51,6 +61,7 @@ builder.Services.AddDbContext<XivDbContext>();
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+app.UseCors();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -64,11 +75,28 @@ if (app.Environment.IsDevelopment())
 
 
 
-app.MapGet("/getAllItemNames", async (IDbController dbController) =>
-{ 
-    return JsonConvert.SerializeObject(await dbController.GetAllItems().ToListAsync());
+app.MapGet("/all-items", async (IDbController dbController) =>
+{
+    var result = await dbController.GetAllItems().ToListAsync();
+
+    ApiResponse apiResponse = new ApiResponse();
+    
+
+    if (result.Count > 0)
+    {
+        //remove take10
+        apiResponse.Items = result.Take(10);
+        apiResponse.message = "ok";
+    }
+    else
+    {
+        apiResponse.message = ApiResponse.noItemsMessage;
+    }
+
+
+    return JsonConvert.SerializeObject(apiResponse);
 })
-.WithName("getAllItemNames");
+.WithName("get all items from db");
 
 app.MapGet("/all-recipies", () =>
 {
@@ -103,14 +131,25 @@ app.MapGet("/marketboard-entries", async (IDbController dbController, IEnumerabl
 
 
 
-app.MapPut("/import-all-recipes", async  (IXivApiController xivApiController) =>
+app.MapPut("/import-all-recipes", async  (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
+{
+
+    var Recipes = await xivApiController.ImportRecipiesAndItems();
+    var result2 = await universalisApiController.ImportMarketableItems();
+
+    return "";
+})
+.WithName("import all recipes");
+
+app.MapPut("/reImport-all-recipes", async (IXivApiController xivApiController) =>
 {
 
     var worlds = await xivApiController.ImportRecipiesAndItems();
 
     return "";
 })
-.WithName("import all recipes");
+.WithName("reset and import all recipes");
+
 
 
 app.MapPut("/importWorlds", async (IXivApiController xivApiController) =>

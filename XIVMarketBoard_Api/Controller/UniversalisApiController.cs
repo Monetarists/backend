@@ -28,10 +28,10 @@ namespace XIVMarketBoard_Api.Controller
         private readonly IDbController _dbController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
 
-        public UniversalisApiController(IDbController dbController, IUniversalisApiRepository universalisApiRepositiorry)
+        public UniversalisApiController(IDbController dbController, IUniversalisApiRepository universalisApiRepositiory)
         {
             _dbController = dbController;
-            _universalisApiRepository = universalisApiRepositiorry;
+            _universalisApiRepository = universalisApiRepositiory;
         }
         public async Task<string> ImportMarketableItems()
         {
