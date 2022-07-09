@@ -3,10 +3,8 @@ using XIVMarketBoard_Api.Data;
 using XIVMarketBoard_Api.Repositories;
 using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
-using XIVMarketBoard_Api.Repositories.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,7 +56,7 @@ builder.Services.AddTransient<IUniversalisApiController, UniversalisApiControlle
 builder.Services.AddTransient<IXivApiController, XivApiController>();
 builder.Services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
 builder.Services.AddTransient<IXivApiRepository, XivApiRepository>();
-builder.Services.AddTransient<IDbController, MarketBoardApiController>();
+builder.Services.AddTransient<IMarketBoardApiController, MarketBoardApiController>();
 builder.Services.AddDbContext<XivDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
             ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
@@ -80,22 +78,22 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.MapGet("/all-item-names", async (IDbController dbController) =>
+app.MapGet("/all-item-names", async (IMarketBoardApiController dbController) =>
 {
-    var result = await dbController.GetAllItems().ToListAsync();
+    var result = await dbController.GetAllItemNames();
 
-    ApiResponse apiResponse = new ApiResponse();
+    ResponseDto apiResponse = new ResponseDto();
 
 
     if (result.Count > 0)
     {
         //remove take10
-        apiResponse.Items = result.Take(10);
+        apiResponse.dict = result.Take(10).ToDictionary(r => r.Key, r => r.Value);
         apiResponse.message = "ok";
     }
     else
     {
-        apiResponse.message = ApiResponse.noItemsMessage;
+        apiResponse.message = ResponseDto.noItemsMessage;
     }
 
 
@@ -103,11 +101,34 @@ app.MapGet("/all-item-names", async (IDbController dbController) =>
 })
 .WithName("get all items names and ids from db");
 
-app.MapGet("/all-items", async (IDbController dbController) =>
+app.MapGet("/all-recipe-names", async (IMarketBoardApiController dbController) =>
+{
+    var result = await dbController.GetAllRecipeNames();
+
+    ResponseDto apiResponse = new ResponseDto();
+
+
+    if (result.Count > 0)
+    {
+        //remove take10
+        apiResponse.dict = result.Take(10).ToDictionary(r => r.Key, r => r.Value);
+        apiResponse.message = "ok";
+    }
+    else
+    {
+        apiResponse.message = ResponseDto.noItemsMessage;
+    }
+
+
+    return JsonConvert.SerializeObject(apiResponse);
+})
+.WithName("get all recipe names and ids from db");
+
+app.MapGet("/all-items", async (IMarketBoardApiController dbController) =>
 {
     var result = await dbController.GetAllItems().ToListAsync();
 
-    ApiResponse apiResponse = new ApiResponse();
+    ResponseDto apiResponse = new ResponseDto();
     
 
     if (result.Count > 0)
@@ -118,7 +139,7 @@ app.MapGet("/all-items", async (IDbController dbController) =>
     }
     else
     {
-        apiResponse.message = ApiResponse.noItemsMessage;
+        apiResponse.message = ResponseDto.noItemsMessage;
     }
 
 
@@ -135,7 +156,7 @@ app.MapGet("/all-recipies", () =>
 })
 .WithName("get all recipies from db");
 
-app.MapGet("/recipe-by-name", async (IDbController dbController, string recipeName) =>
+app.MapGet("/recipe-by-name", async (IMarketBoardApiController dbController, string recipeName) =>
 {
 
     var result = await dbController.GetRecipeFromNameIncludeIngredients(recipeName);
@@ -151,7 +172,7 @@ app.MapGet("/recipe-by-name", async (IDbController dbController, string recipeNa
 })
 .WithName("get recipe and items");
 
-app.MapGet("/marketboard-entries", async (IDbController dbController, IEnumerable<string> itemNames, string worldName) =>
+app.MapGet("/marketboard-entries", async (IMarketBoardApiController dbController, IEnumerable<string> itemNames, string worldName) =>
 {
     return await dbController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync(); ;
 })
@@ -189,7 +210,7 @@ app.MapPut("/importWorlds", async (IXivApiController xivApiController) =>
 })
 .WithName("import worlds");
 
-app.MapPut("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IDbController dbController) =>
+app.MapPut("/importItemEntry", async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IMarketBoardApiController dbController) =>
 {
 
     var world = await dbController.GetWorldFromName(WorldName);
@@ -206,7 +227,7 @@ app.MapPut("/importItemEntry", async (int Itemid, string WorldName, int entries,
 })
 .WithName("import item entry");
 
-app.MapPut("/import-items-for-world", async (IUniversalisApiController universalisApiController, IDbController dbController, string worldName) =>
+app.MapPut("/import-items-for-world", async (IUniversalisApiController universalisApiController, IMarketBoardApiController dbController, string worldName) =>
 {
 
     var world = await dbController.GetWorldFromName(worldName);
@@ -221,7 +242,7 @@ app.MapPut("/import-items-for-world", async (IUniversalisApiController universal
 .WithName("import items for world");
 
 
-app.MapPut("/set-crafted-on-items", async  (IXivApiController xivApiController, IDbController dbController) =>
+app.MapPut("/set-crafted-on-items", async  (IXivApiController xivApiController, IMarketBoardApiController dbController) =>
 {
 
     var result = await dbController.SetCraftableItemsFromRecipes();
