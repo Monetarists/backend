@@ -39,10 +39,10 @@ namespace XIVMarketBoard_Api.Controller
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
     }
 
-    public class DbController : IDbController
+    public class MarketBoardApiController : IDbController
     {
         private readonly XivDbContext _xivContext;
-        public DbController(XivDbContext xivContext)
+        public MarketBoardApiController(XivDbContext xivContext)
         {
             _xivContext = xivContext;
         }
@@ -99,7 +99,7 @@ namespace XIVMarketBoard_Api.Controller
 
              rewrite to fetch latest universalisquery for item
             }*/
-            public async Task<string> SetCraftableItemsFromRecipes()
+        public async Task<string> SetCraftableItemsFromRecipes()
         {
 
             try
