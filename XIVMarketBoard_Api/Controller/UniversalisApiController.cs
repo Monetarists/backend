@@ -25,10 +25,10 @@ namespace XIVMarketBoard_Api.Controller
 
     public class UniversalisApiController : IUniversalisApiController
     {
-        private readonly IDbController _dbController;
+        private readonly IMarketBoardApiController _dbController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
 
-        public UniversalisApiController(IDbController dbController, IUniversalisApiRepository universalisApiRepositiory)
+        public UniversalisApiController(IMarketBoardApiController dbController, IUniversalisApiRepository universalisApiRepositiory)
         {
             _dbController = dbController;
             _universalisApiRepository = universalisApiRepositiory;

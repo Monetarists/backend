@@ -20,8 +20,8 @@ namespace XIVMarketBoard_Api.Controller
     public class XivApiController : IXivApiController
     {
         private readonly IXivApiRepository _xivApiRepository;
-        private readonly IDbController _dbController;
-        public XivApiController(IXivApiRepository xivApiRepository, IDbController dbController)
+        private readonly IMarketBoardApiController _dbController;
+        public XivApiController(IXivApiRepository xivApiRepository, IMarketBoardApiController dbController)
         {
             _xivApiRepository = xivApiRepository;
             _dbController = dbController;
