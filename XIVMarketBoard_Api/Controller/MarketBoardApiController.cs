@@ -12,10 +12,10 @@ using System.Linq;
 
 namespace XIVMarketBoard_Api.Controller
 {
-    public interface IDbController
+    public interface IMarketBoardApiController
     {
         IAsyncEnumerable<Item> GetAllItems();
-        IAsyncEnumerable<Recipe> GetAllRecipies();
+        IAsyncEnumerable<Recipe> GetAllRecipes();
         Task<Item?> GetItemFromId(int itemId);
         Task<Item?> GetItemFromNameAsync(string itemName);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId);
@@ -37,9 +37,11 @@ namespace XIVMarketBoard_Api.Controller
         IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames);
         IAsyncEnumerable<UniversalisEntry?> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
+        Task<Dictionary<int, string>> GetAllItemNames();
+        Task<Dictionary<int, string>> GetAllRecipeNames(); 
     }
 
-    public class MarketBoardApiController : IDbController
+    public class MarketBoardApiController : IMarketBoardApiController
     {
         private readonly XivDbContext _xivContext;
         public MarketBoardApiController(XivDbContext xivContext)
@@ -52,13 +54,16 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<Recipe?> GetRecipeFromName(string recipeName) => await _xivContext.Recipes.FirstOrDefaultAsync(r => r.Name == recipeName);
         public async Task<Recipe?> GetRecipeFromNameIncludeIngredients(string recipeName) => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).FirstOrDefaultAsync(r => r.Name == recipeName);
         public IAsyncEnumerable<Recipe> GetRecipiesByIds(List<int> recipeId) => _xivContext.Recipes.Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
-        public IAsyncEnumerable<Recipe> GetAllRecipies() => _xivContext.Set<Recipe>().AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetAllRecipes() => _xivContext.Set<Recipe>().AsAsyncEnumerable();
+        public async Task<Dictionary<int, string>> GetAllRecipeNames() => await _xivContext.Recipes.Select(recipe => new KeyValuePair<int,string>(recipe.Id, recipe.Name)).ToDictionaryAsync(r => r.Key, r => r.Value);
         public IAsyncEnumerable<Recipe> GetAllRecipiesIncludeItem() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames) => _xivContext.Recipes.Include(i => i.Ingredients).ThenInclude(p => p.Item).Where(r => recipeNames.Contains(r.Name)).ToAsyncEnumerable();
         public async Task<Recipe?> GetRecipeFromNameIncludeItem(string recipeName) => await _xivContext.Recipes.Include(i => i.Item).FirstOrDefaultAsync(r => recipeName.Contains(r.Name));
         public IAsyncEnumerable<Item> GetItemsByIds(List<int> itemIds) => _xivContext.Items.Where(r => itemIds.Contains(r.Id)).AsAsyncEnumerable();
         public async Task<Item?> GetItemFromId(int itemId) => await _xivContext.Items.FirstOrDefaultAsync(p => p.Id == itemId);
         public IAsyncEnumerable<Item> GetAllItems() => _xivContext.Set<Item>().AsAsyncEnumerable();
+        public async Task<Dictionary<int, string>> GetAllItemNames() => await _xivContext.Items.Select(item => new KeyValuePair<int, string>(item.Id, item.Name)).ToDictionaryAsync(r => r.Key, r => r.Value);
+
         public async Task<Item?> GetItemFromNameAsync(string itemName) => await _xivContext.Items.FirstOrDefaultAsync(r => r.Name == itemName);
         public async Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId) => await _xivContext.UniversalisEntries
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
