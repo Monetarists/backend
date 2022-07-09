@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using XIVMarketBoard_Api;
 
 var builder = WebApplication.CreateBuilder(args);
 

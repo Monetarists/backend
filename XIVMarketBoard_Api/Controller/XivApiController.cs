@@ -163,16 +163,16 @@ namespace XIVMarketBoard_Api.Controller
 
         private static IEnumerable<Ingredient> CreateIngredientList(XivApiResult r)
         {
-            if (r.ItemIngredient0.Id != null) yield return new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id.Value, Name = r.ItemIngredient0.Name } };
-            if (r.ItemIngredient1.Id != null) yield return new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id.Value, Name = r.ItemIngredient1.Name } };
-            if (r.ItemIngredient2.Id != null) yield return new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id.Value, Name = r.ItemIngredient2.Name } };
-            if (r.ItemIngredient3.Id != null) yield return new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id.Value, Name = r.ItemIngredient3.Name } };
-            if (r.ItemIngredient4.Id != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id.Value, Name = r.ItemIngredient4.Name } };
-            if (r.ItemIngredient5.Id != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id.Value, Name = r.ItemIngredient5.Name } };
-            if (r.ItemIngredient6.Id != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id.Value, Name = r.ItemIngredient6.Name } };
-            if (r.ItemIngredient7.Id != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id.Value, Name = r.ItemIngredient7.Name } };
-            if (r.ItemIngredient8.Id != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id.Value, Name = r.ItemIngredient8.Name } };
-            if (r.ItemIngredient9.Id != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id.Value, Name = r.ItemIngredient9.Name } };
+            if (r.ItemIngredient0.Id != null && r.ItemIngredient0.Name != null) yield return new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id.Value, Name = r.ItemIngredient0.Name } };
+            if (r.ItemIngredient1.Id != null && r.ItemIngredient1.Name != null) yield return new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id.Value, Name = r.ItemIngredient1.Name } };
+            if (r.ItemIngredient2.Id != null && r.ItemIngredient2.Name != null) yield return new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id.Value, Name = r.ItemIngredient2.Name } };
+            if (r.ItemIngredient3.Id != null && r.ItemIngredient3.Name != null) yield return new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id.Value, Name = r.ItemIngredient3.Name } };
+            if (r.ItemIngredient4.Id != null && r.ItemIngredient4.Name != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id.Value, Name = r.ItemIngredient4.Name } };
+            if (r.ItemIngredient5.Id != null && r.ItemIngredient5.Name != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id.Value, Name = r.ItemIngredient5.Name } };
+            if (r.ItemIngredient6.Id != null && r.ItemIngredient6.Name != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id.Value, Name = r.ItemIngredient6.Name } };
+            if (r.ItemIngredient7.Id != null && r.ItemIngredient7.Name != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id.Value, Name = r.ItemIngredient7.Name } };
+            if (r.ItemIngredient8.Id != null && r.ItemIngredient8.Name != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id.Value, Name = r.ItemIngredient8.Name } };
+            if (r.ItemIngredient9.Id != null && r.ItemIngredient9.Name != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id.Value, Name = r.ItemIngredient9.Name } };
         }
 
         public string GetAllRecipies()
