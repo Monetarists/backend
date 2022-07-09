@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
 using XIVMarketBoard_Api.Repositories.Models;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,7 +59,12 @@ builder.Services.AddTransient<IXivApiController, XivApiController>();
 builder.Services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
 builder.Services.AddTransient<IXivApiRepository, XivApiRepository>();
 builder.Services.AddTransient<IDbController, DbController>();
-builder.Services.AddDbContext<XivDbContext>();
+builder.Services.AddDbContext<XivDbContext>(options =>
+            options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
+            ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
+                builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)));
+
+
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));

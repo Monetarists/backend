@@ -10,34 +10,6 @@ namespace XIVMarketBoard_Api.Data
 
     public class XivDbContext : DbContext
     {
-        /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                IConfigurationRoot configuration = new ConfigurationBuilder()
-                   .SetBasePath(Directory.GetCurrentDirectory())
-                   .AddJsonFile("appsettings.json")
-                   .Build();
-                var connectionString = configuration.GetConnectionString("XivDbConnectionString");
-                optionsBuilder.UseSqlServer(connectionString);
-            }
-        }*/
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                IConfigurationRoot configuration = new ConfigurationBuilder()
-                   .SetBasePath(Directory.GetCurrentDirectory())
-                   .AddJsonFile("appsettings.json")
-                   .AddEnvironmentVariables("ASPNETCORE_")
-                   .Build();
-                var connectionString = configuration.GetConnectionString("XivDbConnectionString");
-
-                optionsBuilder.UseMySql(connectionString,
-                new MySqlServerVersion(new Version(8, 0, 11)));
-            }
-
-        }
 
         public XivDbContext(DbContextOptions<XivDbContext> options)
             : base(options)
