@@ -58,7 +58,7 @@ builder.Services.AddTransient<IUniversalisApiController, UniversalisApiControlle
 builder.Services.AddTransient<IXivApiController, XivApiController>();
 builder.Services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
 builder.Services.AddTransient<IXivApiRepository, XivApiRepository>();
-builder.Services.AddTransient<IDbController, DbController>();
+builder.Services.AddTransient<IDbController, MarketBoardApiController>();
 builder.Services.AddDbContext<XivDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
             ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
@@ -80,7 +80,28 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.MapGet("/all-item-names", async (IDbController dbController) =>
+{
+    var result = await dbController.GetAllItems().ToListAsync();
 
+    ApiResponse apiResponse = new ApiResponse();
+
+
+    if (result.Count > 0)
+    {
+        //remove take10
+        apiResponse.Items = result.Take(10);
+        apiResponse.message = "ok";
+    }
+    else
+    {
+        apiResponse.message = ApiResponse.noItemsMessage;
+    }
+
+
+    return JsonConvert.SerializeObject(apiResponse);
+})
+.WithName("get all items names and ids from db");
 
 app.MapGet("/all-items", async (IDbController dbController) =>
 {
