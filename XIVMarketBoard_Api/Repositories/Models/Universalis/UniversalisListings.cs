@@ -1,4 +1,4 @@
-﻿namespace XIVMarketBoard_Api.Repositories.Models
+﻿namespace XIVMarketBoard_Api.Repositories.Models.Universalis
 {
 
     public class UniversalisListings
