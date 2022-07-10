@@ -35,7 +35,7 @@ namespace XIVMarketBoard_Api.Controller
         }
         public async Task<string> ImportMarketableItems()
         {
-            
+
             var response = await _universalisApiRepository.GetUniversalisListMarketableItems();
             if (response.IsSuccessStatusCode)
             {
@@ -65,7 +65,7 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     var res = await response.Content.ReadAsStringAsync();
                     var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync());
-                    if(parsedResult == null)
+                    if (parsedResult == null)
                     {
                         throw new NullReferenceException();
                     }
@@ -87,11 +87,11 @@ namespace XIVMarketBoard_Api.Controller
             {
                 List<UniversalisEntry> uniList = new List<UniversalisEntry>();
                 var itemList = _dbController.GetAllItems().ToListAsync().Result;
-                
-                for(var amount = 0;  itemList.Count() >= amount; amount += 100)
+
+                for (var amount = 0; itemList.Count() >= amount; amount += 100)
                 {
 
-                    var itemColl =  itemList.Skip(amount).Take(100);
+                    var itemColl = itemList.Skip(amount).Take(100);
                     var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
                     if (response.IsSuccessStatusCode)
                     {
@@ -103,7 +103,7 @@ namespace XIVMarketBoard_Api.Controller
                             {
                                 throw new NullReferenceException();
                             }
-                            foreach(var i in parsedResult.items)
+                            foreach (var i in parsedResult.items)
                             {
                                 var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
                                 uniList.Add(CreateUniversalisEntry(i, world, a));
@@ -126,9 +126,9 @@ namespace XIVMarketBoard_Api.Controller
                 //uniList.ForEach(async i => i = await _dbController.GetOrCreateUniversalisQuery(i));
 
                 return "Imported all items on world " + world.Name;
-                
+
             }
-            
+
             catch (Exception e)
             {
                 throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
@@ -159,36 +159,36 @@ namespace XIVMarketBoard_Api.Controller
             return "";
         }
         public UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item) =>
-        
+
              new UniversalisEntry
-            {
-                Item = item, // item.item;
-                World = world,
-                LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTimeMilliSeconds(responseItem.lastUploadTime),
-                QueryDate = DateTime.Now,
-                Posts = CreateMbPostEntries(responseItem.listings).ToList(), // list listings
-                SaleHistory = CreateSaleHistoryEntries(responseItem.recentHistory).ToList(), //list recentHistory
-                CurrentAveragePrice = responseItem.currentAveragePrice,
-                CurrentAveragePrinceNQ = responseItem.currentAveragePrinceNQ,
-                CurrentAveragePriceHQ = responseItem.currentAveragePriceHQ,
-                RegularSaleVelocity = responseItem.regularSaleVelocity,
-                NqSaleVelocity = responseItem.nqSaleVelocity,
-                HqSaleVelocity = responseItem.hqSaleVelocity,
-                AveragePrice = responseItem.averagePrice,
-                AveragePriceNQ = responseItem.averagePriceNQ,
-                AveragePriceHQ = responseItem.averagePriceHQ,
-                MinPrice = responseItem.minPrice,
-                MinPriceNQ = responseItem.minPriceNQ,
-                MinPriceHQ = responseItem.minPriceHQ,
-                MaxPrice = responseItem.maxPrice,
-                MaxPriceNQ = responseItem.maxPriceNQ,
-                MaxPriceHQ = responseItem.maxPriceHQ
-            };
-            
-        
+             {
+                 Item = item, // item.item;
+                 World = world,
+                 LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTimeMilliSeconds(responseItem.lastUploadTime),
+                 QueryDate = DateTime.Now,
+                 Posts = CreateMbPostEntries(responseItem.listings).ToList(), // list listings
+                 SaleHistory = CreateSaleHistoryEntries(responseItem.recentHistory).ToList(), //list recentHistory
+                 CurrentAveragePrice = responseItem.currentAveragePrice,
+                 CurrentAveragePrinceNQ = responseItem.currentAveragePrinceNQ,
+                 CurrentAveragePriceHQ = responseItem.currentAveragePriceHQ,
+                 RegularSaleVelocity = responseItem.regularSaleVelocity,
+                 NqSaleVelocity = responseItem.nqSaleVelocity,
+                 HqSaleVelocity = responseItem.hqSaleVelocity,
+                 AveragePrice = responseItem.averagePrice,
+                 AveragePriceNQ = responseItem.averagePriceNQ,
+                 AveragePriceHQ = responseItem.averagePriceHQ,
+                 MinPrice = responseItem.minPrice,
+                 MinPriceNQ = responseItem.minPriceNQ,
+                 MinPriceHQ = responseItem.minPriceHQ,
+                 MaxPrice = responseItem.maxPrice,
+                 MaxPriceNQ = responseItem.maxPriceNQ,
+                 MaxPriceHQ = responseItem.maxPriceHQ
+             };
+
+
 
         public IEnumerable<MbPost> CreateMbPostEntries(IEnumerable<UniversalisListings> listings) =>
-        
+
             listings.Select(i => new MbPost()
             {
                 Id = i.listingID,
@@ -203,7 +203,7 @@ namespace XIVMarketBoard_Api.Controller
 
         public IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> listings) =>
             listings.Select(i =>
-                new SaleHistory ()
+                new SaleHistory()
                 {
                     Quantity = i.quantity,
                     SaleDate = _universalisApiRepository.UnixTimeStampToDateTimeSeconds(i.timestamp),
@@ -211,7 +211,7 @@ namespace XIVMarketBoard_Api.Controller
                     BuyerName = i.buyerName,
                     HighQuality = i.hq
                 });
-            
-        
+
+
     }
 }

@@ -13,8 +13,6 @@ using AutoMapper;
 
 namespace XIVMarketBoard_Api.Controller
 {
-
-
     public interface IUserController
     {
         AuthenticateResponse Authenticate(AuthenticateRequest model);
@@ -44,7 +42,7 @@ namespace XIVMarketBoard_Api.Controller
         {
             var user = _xivContext.Users.SingleOrDefault(x => x.UserName == model.UserName);
             // validate
-            
+
             if (user == null || !Verify(model.Password, user.PasswordHash))
                 throw new AppException("Username or password is incorrect");
 
@@ -72,7 +70,7 @@ namespace XIVMarketBoard_Api.Controller
 
             // map model to new user object
             var user = _mapper.Map<User>(model);
-            
+
             // hash password
             user.PasswordHash = HashPassword(model.Password);
 
