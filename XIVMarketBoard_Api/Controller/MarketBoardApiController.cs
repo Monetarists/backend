@@ -20,17 +20,17 @@ namespace XIVMarketBoard_Api.Controller
         Task<Item?> GetItemFromNameAsync(string itemName);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId);
         Task<MbPost> GetOrCreateMbPost(MbPost tempMbPost, XivDbContext _xivContext);
-        Task<string> GetOrCreateRecipies(IEnumerable<Recipe> RecipeList);
+        Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList);
         Task<UniversalisEntry> GetOrCreateUniversalisQuery(UniversalisEntry q);
         Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
         Task<Recipe?> GetRecipeFromName(string recipeName);
         Task<Recipe?> GetRecipeFromNameIncludeIngredients(string recipeName);
-        IAsyncEnumerable<Recipe> GetRecipiesByIds(List<int> recipeId);
+        IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId);
         Task<World?> GetWorldFromName(string worldName);
-        Task<string> ResetAndSaveRecipiesToDb(IEnumerable<Recipe> RecipeList);
+        Task<string> ResetAndSaveRecipesToDb(IEnumerable<Recipe> RecipeList);
         Task<IEnumerable<DataCenter>> SaveDataCenters(IEnumerable<DataCenter> dcList);
         Task<IEnumerable<World>> SaveWorlds(IEnumerable<World> worldList);
-        IAsyncEnumerable<Recipe> GetAllRecipiesIncludeItem();
+        IAsyncEnumerable<Recipe> GetAllRecipesIncludeItem();
         Task<string> SetCraftableItemsFromRecipes();
         IAsyncEnumerable<Item> GetItemsByIds(List<int> itemIds);
         Task<string> UpdateItems(List<Item> iList);
@@ -38,7 +38,8 @@ namespace XIVMarketBoard_Api.Controller
         IAsyncEnumerable<UniversalisEntry?> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
         Task<Dictionary<int, string>> GetAllItemNames();
-        Task<Dictionary<int, string>> GetAllRecipeNames(); 
+        Task<Dictionary<int, string>> GetAllRecipeNames();
+        IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemId);
     }
 
     public class MarketBoardApiController : IMarketBoardApiController
@@ -53,10 +54,11 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<Recipe?> GetRecipeFromName(string recipeName) => await _xivContext.Recipes.FirstOrDefaultAsync(r => r.Name == recipeName);
         public async Task<Recipe?> GetRecipeFromNameIncludeIngredients(string recipeName) => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).FirstOrDefaultAsync(r => r.Name == recipeName);
-        public IAsyncEnumerable<Recipe> GetRecipiesByIds(List<int> recipeId) => _xivContext.Recipes.Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemIds) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => itemIds.Contains(r.Item.Id)).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetAllRecipes() => _xivContext.Set<Recipe>().AsAsyncEnumerable();
         public async Task<Dictionary<int, string>> GetAllRecipeNames() => await _xivContext.Recipes.Select(recipe => new KeyValuePair<int,string>(recipe.Id, recipe.Name)).ToDictionaryAsync(r => r.Key, r => r.Value);
-        public IAsyncEnumerable<Recipe> GetAllRecipiesIncludeItem() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetAllRecipesIncludeItem() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames) => _xivContext.Recipes.Include(i => i.Ingredients).ThenInclude(p => p.Item).Where(r => recipeNames.Contains(r.Name)).ToAsyncEnumerable();
         public async Task<Recipe?> GetRecipeFromNameIncludeItem(string recipeName) => await _xivContext.Recipes.Include(i => i.Item).FirstOrDefaultAsync(r => recipeName.Contains(r.Name));
         public IAsyncEnumerable<Item> GetItemsByIds(List<int> itemIds) => _xivContext.Items.Where(r => itemIds.Contains(r.Id)).AsAsyncEnumerable();
@@ -109,21 +111,15 @@ namespace XIVMarketBoard_Api.Controller
 
             try
             {
-                var recipeColl = GetAllRecipiesIncludeItem();
+                var recipeColl = GetAllRecipesIncludeItem();
                 //_xivContext.UpdateRange(recipeColl);
                 await foreach (var r in recipeColl)
                 {
                     r.Item.CanBeCrafted = true;
                     //todo crashes Cannot access a disposed object.
                 }
-                //var updatedRecipies = await recipies.ToListAsync();
-                
-                
-                
-                //await recipeColl.ForEachAsync(i => i.Item.CanBeCrafted = true);
-                //_xivContext.Update(recipies);
                 await _xivContext.SaveChangesAsync();
-                return "updated recipies";
+                return "updated recipes";
             }
             catch (Exception e)
             {
@@ -168,7 +164,7 @@ namespace XIVMarketBoard_Api.Controller
             return worldList;
 
         }
-        public async Task<string> ResetAndSaveRecipiesToDb(IEnumerable<Recipe> RecipeList)
+        public async Task<string> ResetAndSaveRecipesToDb(IEnumerable<Recipe> RecipeList)
         {
 
             _xivContext.Database.ExecuteSqlRaw(@"SET FOREIGN_KEY_CHECKS = 0; Truncate table Recipes;Truncate table Ingredients;Truncate table Items; SET FOREIGN_KEY_CHECKS = 1");
@@ -188,11 +184,11 @@ namespace XIVMarketBoard_Api.Controller
 
             await _xivContext.SaveChangesAsync();
 
-            return "successfully saved " + RecipeList.Count() + "recipies";
+            return "successfully saved " + RecipeList.Count() + "recipes";
 
         }
         
-        public async Task<string> GetOrCreateRecipies(IEnumerable<Recipe> RecipeList)
+        public async Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList)
         {
 
             foreach (var recipe in RecipeList)
@@ -227,7 +223,7 @@ namespace XIVMarketBoard_Api.Controller
 
             await _xivContext.SaveChangesAsync();
 
-            return "successfully saved " + RecipeList.Count() + "recipies";
+            return "successfully saved " + RecipeList.Count() + "recipes";
 
         }
         private async Task<Item> GetOrCreateItemFromContext(Item item)
