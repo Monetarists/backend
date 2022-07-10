@@ -6,7 +6,7 @@ using XIVMarketBoard_Api.Data;
 using System;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
-using XIVMarketBoard_Api.Repositories.Models;
+using XIVMarketBoard_Api.Repositories.Models.Universalis;
 
 namespace XIVMarketBoard_Api.Controller
 {
