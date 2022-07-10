@@ -18,5 +18,3 @@ namespace XIVMarketBoard_Api.Entities
         public string PasswordHash { get; set; }
     }
 }
-
- 

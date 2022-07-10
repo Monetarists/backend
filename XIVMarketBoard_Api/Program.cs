@@ -107,10 +107,11 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.MapGet("/Authenticate", (IUserController userController, string username, string password) => {
-    AuthenticateRequest req = new AuthenticateRequest() { UserName = username, Password = password};
+app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
+{
+    AuthenticateRequest req = new AuthenticateRequest() { UserName = username, Password = password };
     var response = userController.Authenticate(req);
-    if(response.Token != null)
+    if (response.Token != null)
     {
         return Results.Ok(response);
     }
@@ -136,11 +137,11 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
 
 
 app.MapGet("/items", async (IMarketBoardApiController marketboardApiController) =>
-{ 
+{
     var result = await marketboardApiController.GetAllItems().ToListAsync();
 
     ResponseDto apiResponse = new ResponseDto();
-    
+
 
     if (result.Count > 0)
     {
@@ -149,7 +150,7 @@ app.MapGet("/items", async (IMarketBoardApiController marketboardApiController) 
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
-    
+
     apiResponse.message = ResponseDto.noItemsMessage;
     return Results.NotFound(apiResponse);
 })
@@ -167,7 +168,7 @@ app.MapGet("/item", async (IMarketBoardApiController marketboardApiController, i
 
     if (result != null)
     {
-    //remove take10
+        //remove take10
         apiResponse.Items = new List<Item> { result };
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
@@ -187,7 +188,7 @@ app.MapGet("/recipes", async (IMarketBoardApiController marketboardApiController
 
     if (result.Count > 0)
     {
-        //remove take10
+        //remove take10    
         apiResponse.Recipes = result.Take(10);
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
@@ -201,17 +202,19 @@ app.MapGet("/recipes", async (IMarketBoardApiController marketboardApiController
 app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController, int? recipeId, int? itemId, string? recipeName) =>
 {
     var result = new List<Recipe>();
-    if(recipeId == null && itemId == null && recipeName == null)
+    if (recipeId == null && itemId == null && recipeName == null)
     {
         return Results.BadRequest("Endpoint requires one of the following parameters: int? recipeId, int? itemId, string? recipeName");
     }
     if (recipeId != null)
     {
         result = await marketboardApiController.GetRecipesByIds(new List<int> { recipeId.Value }).ToListAsync();
-    } else if (itemId != null)
+    }
+    else if (itemId != null)
     {
         result = await marketboardApiController.GetRecipesByItemIds(new List<int> { itemId.Value }).ToListAsync();
-    } else if (recipeName != null)
+    }
+    else if (recipeName != null)
     {
         result = await marketboardApiController.GetRecipesFromNameCollIncludeIngredients(new List<string> { recipeName }).ToListAsync();
     }
@@ -235,45 +238,7 @@ app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController,
 })
 .WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
-/*
-//gets all recipes that produce an item. Different jobs have different recipes for the same item
-app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController, int itemId) =>
-{
-    var result = await marketboardApiController.GetRecipesByItemIds(new List<int> { itemId }).ToListAsync();
 
-    ResponseDto apiResponse = new ResponseDto();
-
-
-    if (result.Count > 0)
-    {
-        //remove take10
-        apiResponse.Recipes = result;
-        apiResponse.message = "ok";
-        return Results.Ok(apiResponse);
-    }
-    apiResponse.message = "Not Found";
-    return Results.NotFound(apiResponse);
-
-    
-    
-})
-.WithName("get info for a specific recipe based on item id"); 
-
-app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController, string recipeName) =>
-{
-
-    var result = await marketboardApiController.GetRecipeFromNameIncludeIngredients(recipeName);
-    if (result != null)
-    {
-        var nameList = result.Ingredients.Select(i => i.Item.Name).ToList();
-        var subRecipeList = marketboardApiController.GetRecipesFromNameCollIncludeIngredients(nameList);
-    }
-    
-    //fixa reply som har recipe/item -> ingredients -> recipes/items
-    //troligen är best practise att skapa ett gäng models och jsonkoda dom
-    return "";
-})
-.WithName("get recipe by name");*/
 
 app.MapGet("/marketboard-entries", [Authorize] async (IMarketBoardApiController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
 {
@@ -285,7 +250,7 @@ app.MapGet("/marketboard-entries", [Authorize] async (IMarketBoardApiController 
 
 
 
-app.MapPut("/import-all-recipes", [Authorize] async  (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
+app.MapPut("/import-all-recipes", [Authorize] async (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
 {
 
     var Recipes = await xivApiController.ImportRecipiesAndItems();
@@ -326,7 +291,7 @@ app.MapPut("/importItemEntry", [Authorize] async (int Itemid, string WorldName, 
         var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
         return JsonConvert.SerializeObject(result);
     }
-    
+
 
     return "";
 })
@@ -347,7 +312,7 @@ app.MapPut("/import-items-for-world", [Authorize] async (IUniversalisApiControll
 .WithName("import items for world");
 
 
-app.MapPut("/set-crafted-on-items", [Authorize] async  (IXivApiController xivApiController, IMarketBoardApiController marketboardApiController) =>
+app.MapPut("/set-crafted-on-items", [Authorize] async (IXivApiController xivApiController, IMarketBoardApiController marketboardApiController) =>
 {
 
     var result = await marketboardApiController.SetCraftableItemsFromRecipes();

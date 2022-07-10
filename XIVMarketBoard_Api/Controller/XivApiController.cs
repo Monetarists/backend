@@ -35,7 +35,7 @@ namespace XIVMarketBoard_Api.Controller
                 {
 
                     var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
-                    if(responseResult == null)
+                    if (responseResult == null)
                     {
                         throw new Exception("JsonConvert returned null object");
                     }
@@ -99,7 +99,7 @@ namespace XIVMarketBoard_Api.Controller
             string resultString = "";
             var resultList = new List<XivApiResult>();
             string contentString;
-            
+
             for (int i = 0; resultsTotal >= i; i += amount)
             {
                 var httpResponse = await _xivApiRepository.GetRecipesAsync(i, amount);
