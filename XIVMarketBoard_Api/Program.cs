@@ -117,7 +117,7 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
     return Results.NotFound(response);
 }).WithName("Authenticate user");
 
-app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
+/*app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
 {
     string error;
     RegisterRequest req = new RegisterRequest() { UserName = username, Password = password };
@@ -132,7 +132,7 @@ app.MapGet("/Register", [Authorize] (IUserController userController, string user
     }
     return Results.BadRequest(error);
 
-}).WithName("Register user");
+}).WithName("Register user");*/
 
 
 app.MapGet("/items", async (IMarketBoardApiController marketboardApiController) =>
@@ -201,6 +201,10 @@ app.MapGet("/recipes", async (IMarketBoardApiController marketboardApiController
 app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController, int? recipeId, int? itemId, string? recipeName) =>
 {
     var result = new List<Recipe>();
+    if(recipeId == null && itemId == null && recipeName == null)
+    {
+        return Results.BadRequest("Endpoint requires one of the following parameters: int? recipeId, int? itemId, string? recipeName");
+    }
     if (recipeId != null)
     {
         result = await marketboardApiController.GetRecipesByIds(new List<int> { recipeId.Value }).ToListAsync();
@@ -229,7 +233,7 @@ app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController,
 
 
 })
-.WithName("get info for a specific recipe based on recipe id");
+.WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
 /*
 //gets all recipes that produce an item. Different jobs have different recipes for the same item

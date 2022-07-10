@@ -9,8 +9,5 @@ namespace XIVMarketBoard_Api
         public IEnumerable<Item>? Items { get; set; }
         public IEnumerable<Recipe>? Recipes { get; set; }
         public IEnumerable<UniversalisEntry>? UniversalisEntry { get; set; }
-        public Dictionary<int, string>? dict { get; set; }
-
-
     }
 }
