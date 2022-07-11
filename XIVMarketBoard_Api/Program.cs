@@ -70,7 +70,7 @@ services.AddDbContext<XivDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
             ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
                 builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)));
-services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
@@ -81,9 +81,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["AppSettings:Issuer"],
-        ValidAudience = builder.Configuration["AppSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Key"]))
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
 
