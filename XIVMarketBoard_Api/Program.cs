@@ -203,7 +203,7 @@ app.MapPut("/importWorlds", [Authorize] async (IXivApiController xivApiControlle
 {
     try
     {
-        await xivApiController.ImportAllWorldsAndDataCenters();
+        await xivApiController.ImportWorldsDataCentres();
         return Results.Ok("Import successful");
     }
     catch (Exception e)

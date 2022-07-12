@@ -38,59 +38,36 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<string> ImportMarketableItems()
         {
-
             var response = await _universalisApiRepository.GetUniversalisListMarketableItems();
             if (response.IsSuccessStatusCode)
             {
-                try
-                {
-                    var res = await response.Content.ReadAsStringAsync();
-                    var items = _recipeController.GetItemsByIds(JsonConvert.DeserializeObject<List<int>>(res)).ToListAsync().Result;
-                    items.ForEach(item => item.IsMarketable = true);
+                var res = JsonConvert.DeserializeObject<List<int>>(await response.Content.ReadAsStringAsync());
+                if (res == null) return "";
 
-                    return await _recipeController.UpdateItems(items);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
-                }
-
+                var items = await _recipeController.GetItemsByIds(res).ToListAsync();
+                items.ForEach(item => item.IsMarketable = true);
+                return await _recipeController.UpdateItems(items);
             }
-            else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+            return "Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync();
         }
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings)
         {
-
+            var result = new UniversalisEntry();
             var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, "", world.Name, listings, entries);
             if (response.IsSuccessStatusCode)
             {
-                try
-                {
-                    var res = await response.Content.ReadAsStringAsync();
-                    var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync());
-                    if (parsedResult == null)
-                    {
-                        throw new NullReferenceException();
-                    }
-                    var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
-                    var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
-                    if (resultList.Count() > 0)
-                    {
-                        return resultList.First();
 
-                    }
-                    else
-                    {
-                        throw new Exception("No universalis entry created");
-                    }
-                }
-                catch (Exception e)
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync());
+                if (parsedResult != null)
                 {
-                    throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
+                    throw new ArgumentNullException("response from universalis is null");
                 }
+                var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
+                var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
+                return resultList.First();
 
             }
-            else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+            throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
         }
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
@@ -100,41 +77,33 @@ namespace XIVMarketBoard_Api.Controller
                 List<UniversalisEntry> uniList = new List<UniversalisEntry>();
                 var itemList = _recipeController.GetAllItems().ToListAsync().Result;
 
-                for (var amount = 0; itemList.Count() >= amount; amount += calloutSize)
+                for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
                 {
 
                     var itemColl = itemList.Skip(amount).Take(calloutSize);
                     var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
                     if (response.IsSuccessStatusCode)
                     {
-                        try
+                        var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
+                        if (parsedResult != null)
                         {
-                            var res = await response.Content.ReadAsStringAsync();
-                            var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
-                            if (parsedResult == null)
-                            {
-                                throw new NullReferenceException();
-                            }
-                            foreach (var i in parsedResult.items)
-                            {
-                                var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
-                                uniList.Add(CreateUniversalisEntry(i, world, a));
-                            }
+                            throw new ArgumentNullException("response from universalis is null");
                         }
-                        catch (Exception e)
+                        foreach (var i in parsedResult.items)
                         {
-                            throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
+                            var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
+                            uniList.Add(CreateUniversalisEntry(i, world, a));
                         }
-
                     }
-                    else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+                    else
+                    {
+                        throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+                    }
 
                     //wait for api ratelimiting
                     await Task.Delay(80);
                     amount += calloutSize;
                 }
-
-                var result = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
                 return "Imported all items on world " + world.Name;
 
             }
@@ -148,6 +117,7 @@ namespace XIVMarketBoard_Api.Controller
         }
         public async Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world)
         {
+            //TODO figure out if needed
             foreach (var item in itemList)
             {
                 var result = await _universalisApiRepository.GetUniversalisEntryForItems(new List<string>() { item.Id.ToString() }, "", world.Name, 5, 5);
@@ -158,6 +128,8 @@ namespace XIVMarketBoard_Api.Controller
         }
         public async Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings)
         {
+            //TODO figure out if needed
+
             /*List<UniversalisQuery> list = new List<UniversalisQuery>();
             foreach (var item in itemList)
             {
@@ -172,7 +144,7 @@ namespace XIVMarketBoard_Api.Controller
 
              new UniversalisEntry
              {
-                 Item = item, // item.item;
+                 Item = item,
                  World = world,
                  LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTimeMilliSeconds(responseItem.lastUploadTime),
                  QueryDate = DateTime.Now,
