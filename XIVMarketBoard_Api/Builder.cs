@@ -13,7 +13,7 @@ using XIVMarketBoard_Api.Authorization;
 
 namespace XIVMarketBoard_Api
 {
-    public class Builder
+    public static class Builder
     {
         public static IServiceCollection ConfigureServices(WebApplicationBuilder builder)
         {
