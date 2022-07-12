@@ -2,9 +2,7 @@
 using Newtonsoft.Json;
 using System.Net;
 using XIVMarketBoard_Api.Repositories;
-using System.Reactive;
 using System.Reactive.Linq;
-using System.Linq;
 using XIVMarketBoard_Api.Repositories.Models.XivApi;
 
 namespace XIVMarketBoard_Api.Controller
@@ -12,92 +10,76 @@ namespace XIVMarketBoard_Api.Controller
     public interface IXivApiController
     {
         string GetAllRecipies();
-        Task<string> ImportAllWorldsAndDataCenters();
+        Task<string> ImportWorldsDataCentres();
         Task<string> ImportRecipiesAndItems();
     }
 
     public class XivApiController : IXivApiController
     {
         private readonly IXivApiRepository _xivApiRepository;
-        private readonly IMarketBoardController _marketBoardApiController;
         private readonly IDataCentreController _dataCentreController;
         private readonly IRecipeController _recipeController;
-        public XivApiController(IXivApiRepository xivApiRepository, IMarketBoardController marketBoardApiController, IDataCentreController dataCentreController, IRecipeController recipeController)
+        public XivApiController(IXivApiRepository xivApiRepository, IDataCentreController dataCentreController, IRecipeController recipeController)
         {
             _xivApiRepository = xivApiRepository;
-            _marketBoardApiController = marketBoardApiController;
             _dataCentreController = dataCentreController;
             _recipeController = recipeController;
         }
 
-        public async Task<string> ImportAllWorldsAndDataCenters()
+        public async Task<string> ImportWorldsDataCentres()
         {
-            try
+            var worldList = new List<World>();
+            var dataCenterList = new List<DataCenter>();
+            var response = await _xivApiRepository.GetAllWorldsAsync();
+            if (!response.IsSuccessStatusCode)
             {
-                var response = await _xivApiRepository.GetAllWorldsAsync();
-                if (response.IsSuccessStatusCode)
+                return response.StatusCode + " " + await response.Content.ReadAsStringAsync();
+            }
+
+            var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
+            if (responseResult == null) { throw new ArgumentNullException("JsonConvert returned null object"); }
+            foreach (var server in responseResult.Results)
+            {
+                if (server.Name != "")
                 {
-
-                    var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
-                    if (responseResult == null)
+                    var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
+                    var resp = await responseWd.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
+                    if (apiResponse == null)
                     {
-                        throw new Exception("JsonConvert returned null object");
+                        throw new ArgumentNullException("JsonConvert returned null object");
                     }
-                    var worldList = new List<World>();
-                    var dcList = new List<DataCenter>();
 
-                    foreach (var server in responseResult.Results)
+                    if (apiResponse.InGame && apiResponse.Name_en != "")
                     {
-                        if (server.Name != "")
+                        var dcEntity = dataCenterList.FirstOrDefault(p => p.Id == apiResponse.DataCenter.Id);
+                        if (dcEntity == null)
                         {
-                            var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
-                            var resp = await responseWd.Content.ReadAsStringAsync();
-                            var worldContent = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
-                            if (worldContent == null)
-                            {
-                                throw new Exception("JsonConvert returned null object");
-                            }
-                            if (worldContent.InGame == true && worldContent.Name_en != "")
-                            {
-                                var dcEntity = dcList.FirstOrDefault(p => p.Id == worldContent.DataCenter.Id);
-                                if (dcEntity == null)
-                                {
-                                    dcEntity = new DataCenter();
-                                    dcEntity.Name = worldContent.DataCenter.Name_en;
-                                    dcEntity.Id = worldContent.DataCenter.Id;
-                                    dcEntity.Region = worldContent.DataCenter.Region;
-                                    dcList.Add(dcEntity);
-                                }
-
-                                var world = new World();
-                                world.Id = worldContent.Id;
-                                world.Name = worldContent.Name;
-                                world.DataCenter = dcEntity;
-                                worldList.Add(world);
-                            }
-                            await Task.Delay(100);
+                            dcEntity = new DataCenter();
+                            dcEntity.Name = apiResponse.DataCenter.Name_en;
+                            dcEntity.Id = apiResponse.DataCenter.Id;
+                            dcEntity.Region = apiResponse.DataCenter.Region;
+                            dataCenterList.Add(dcEntity);
                         }
 
+                        var world = new World();
+                        world.Id = apiResponse.Id;
+                        world.Name = apiResponse.Name;
+                        world.DataCenter = dcEntity;
+                        worldList.Add(world);
                     }
-                    var dcListDistinct = dcList.Distinct().ToList();
-                    var dcResult = await _dataCentreController.SaveDataCenters(dcList);
-                    var worldResult = await _dataCentreController.SaveWorlds(worldList);
-                    return "import of worlds successful";
-                }
-                else
-                {
-                    return "error";
+                    await Task.Delay(100);
                 }
 
             }
-            catch (Exception e)
-            {
-                return "error: " + e.Message;
-            }
+            var distintcDataCenters = dataCenterList.Distinct().ToList();
+            await _dataCentreController.SaveDataCenters(distintcDataCenters);
+            await _dataCentreController.SaveWorlds(worldList);
+            return "import of worlds successful";
         }
+
         public async Task<string> ImportRecipiesAndItems()
         {
-            //int start = 0;
             int amount = 500;
             int resultsTotal = 0;
             string resultString = "";
@@ -121,7 +103,6 @@ namespace XIVMarketBoard_Api.Controller
                             {
                                 resultsTotal = responseResults.Pagination.ResultsTotal;
                             }
-                            //start += amount;
                             await Task.Delay(100);
                         }
                     }
@@ -153,7 +134,7 @@ namespace XIVMarketBoard_Api.Controller
 
 
 
-        private IEnumerable<Recipe> CreateRecipes(IEnumerable<XivApiResult> resultList) =>
+        private static IEnumerable<Recipe> CreateRecipes(IEnumerable<XivApiResult> resultList) =>
             resultList.Select(r => new Recipe
             {
                 Ingredients = CreateIngredientList(r).ToList(),
