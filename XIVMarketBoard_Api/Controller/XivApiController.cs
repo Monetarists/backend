@@ -19,11 +19,15 @@ namespace XIVMarketBoard_Api.Controller
     public class XivApiController : IXivApiController
     {
         private readonly IXivApiRepository _xivApiRepository;
-        private readonly IMarketBoardApiController _marketBoardApiController;
-        public XivApiController(IXivApiRepository xivApiRepository, IMarketBoardApiController marketBoardApiController)
+        private readonly IMarketBoardController _marketBoardApiController;
+        private readonly IDataCentreController _dataCentreController;
+        private readonly IRecipeController _recipeController;
+        public XivApiController(IXivApiRepository xivApiRepository, IMarketBoardController marketBoardApiController, IDataCentreController dataCentreController, IRecipeController recipeController)
         {
             _xivApiRepository = xivApiRepository;
             _marketBoardApiController = marketBoardApiController;
+            _dataCentreController = dataCentreController;
+            _recipeController = recipeController;
         }
 
         public async Task<string> ImportAllWorldsAndDataCenters()
@@ -76,8 +80,8 @@ namespace XIVMarketBoard_Api.Controller
 
                     }
                     var dcListDistinct = dcList.Distinct().ToList();
-                    var dcResult = await _marketBoardApiController.SaveDataCenters(dcList);
-                    var worldResult = await _marketBoardApiController.SaveWorlds(worldList);
+                    var dcResult = await _dataCentreController.SaveDataCenters(dcList);
+                    var worldResult = await _dataCentreController.SaveWorlds(worldList);
                     return "import of worlds successful";
                 }
                 else
@@ -138,7 +142,7 @@ namespace XIVMarketBoard_Api.Controller
             try
             {
                 var recipeList = CreateRecipes(resultList);
-                await _marketBoardApiController.GetOrCreateRecipes(recipeList);
+                await _recipeController.GetOrCreateRecipes(recipeList);
 
 
             }
