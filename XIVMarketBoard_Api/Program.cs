@@ -1,19 +1,7 @@
-using Microsoft.OpenApi.Models;
-
-using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api;
-using XIVMarketBoard_Api.Data;
-using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Entities;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using AutoMapper;
-using XIVMarketBoard_Api.Helpers;
-using XIVMarketBoard_Api.Authorization;
 using XIVMarketBoard_Api.Repositories.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 
@@ -26,6 +14,7 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
 {
     AuthenticateRequest req = new AuthenticateRequest() { UserName = username, Password = password };
     var response = userController.Authenticate(req);
+
     if (response.Token != null)
     {
         return Results.Ok(response);
@@ -53,10 +42,8 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
 
 app.MapGet("/items", async (IRecipeController recipeController) =>
 {
-    var result = await recipeController.GetAllItems().ToListAsync();
-
     ResponseDto apiResponse = new ResponseDto();
-
+    var result = await recipeController.GetAllItems().ToListAsync();
 
     if (result.Count > 0)
     {
@@ -74,9 +61,7 @@ app.MapGet("/items", async (IRecipeController recipeController) =>
 app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
 {
     var result = await recipeController.GetItemFromId(itemId);
-
     ResponseDto apiResponse = new ResponseDto();
-
 
     if (result != null)
     {
@@ -86,7 +71,6 @@ app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
         return Results.Ok(apiResponse);
     }
     apiResponse.message = ResponseDto.noItemsMessage;
-
     return Results.NotFound(apiResponse);
 })
 .WithName("get info for a specific item");
@@ -94,9 +78,7 @@ app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
 app.MapGet("/recipes", async (IRecipeController recipeController) =>
 {
     var result = await recipeController.GetAllRecipes().ToListAsync();
-
     ResponseDto apiResponse = new ResponseDto();
-
 
     if (result.Count > 0)
     {
@@ -129,7 +111,6 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
     {
         result = await recipeController.GetRecipesFromNameCollIncludeIngredients(new List<string> { recipeName }).ToListAsync();
     }
-
     ResponseDto apiResponse = new ResponseDto();
 
     if (result.Count > 0)
@@ -164,6 +145,7 @@ app.MapGet("/marketboard", [Authorize] async (IMarketBoardController marketboard
     try
     {
         var result = await marketboardApiController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync();
+
         if (result.Count > 0)
         {
             return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = result });
@@ -199,8 +181,8 @@ app.MapPut("/import/marketboard", [Authorize] async (IUniversalisApiController u
 
 app.MapPut("/import/marketboard/{worldName}", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, string worldName) =>
 {
-
     var world = await dataCentreController.GetWorldFromName(worldName);
+
     if (world != null)
     {
         try

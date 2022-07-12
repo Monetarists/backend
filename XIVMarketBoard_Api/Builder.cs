@@ -1,23 +1,15 @@
 ﻿using Microsoft.OpenApi.Models;
-
-using Newtonsoft.Json;
 using XIVMarketBoard_Api.Controller;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using XIVMarketBoard_Api;
 using XIVMarketBoard_Api.Data;
 using XIVMarketBoard_Api.Repositories;
-using XIVMarketBoard_Api.Entities;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using AutoMapper;
 using XIVMarketBoard_Api.Helpers;
 using XIVMarketBoard_Api.Authorization;
-using XIVMarketBoard_Api.Repositories.Models.Users;
-using Microsoft.AspNetCore.Authorization;
-
-
 
 namespace XIVMarketBoard_Api
 {
@@ -55,10 +47,7 @@ namespace XIVMarketBoard_Api
                     }
                 };
                 c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {securityScheme, new string[] { }}
-    });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement { { securityScheme, new string[] { } } });
             });
 
             services.AddAutoMapper(typeof(MapperProfile));
@@ -99,7 +88,6 @@ namespace XIVMarketBoard_Api
         public static WebApplication ConfigureWebApp(WebApplicationBuilder builder)
         {
             var app = builder.Build();
-
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwagger();
