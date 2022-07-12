@@ -18,94 +18,9 @@ using XIVMarketBoard_Api.Repositories.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
-var services = builder.Services;
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-                      {
-                          policy.WithOrigins("*")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                      });
-});
-services.AddEndpointsApiExplorer();
-services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
+var services = Builder.ConfigureServices(builder);
 
-    var securityScheme = new OpenApiSecurityScheme
-    {
-        Name = "JWT Authentication",
-        Description = "Enter JWT Bearer token **_only_**",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // must be lower case
-        BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Id = JwtBearerDefaults.AuthenticationScheme,
-            Type = ReferenceType.SecurityScheme
-        }
-    };
-    c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {securityScheme, new string[] { }}
-    });
-});
-
-services.AddAutoMapper(typeof(MapperProfile));
-services.AddTransient<IUniversalisApiController, UniversalisApiController>();
-services.AddTransient<IXivApiController, XivApiController>();
-services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
-services.AddTransient<IXivApiRepository, XivApiRepository>();
-services.AddTransient<IMarketBoardApiController, MarketBoardApiController>();
-services.AddTransient<IJwtUtils, JwtUtils>();
-services.AddScoped<IUserController, UserController>();
-services.AddTransient<IMapper, Mapper>();
-
-services.AddDbContext<XivDbContext>(options =>
-            options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
-            ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
-                builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)));
-services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
-
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
-{
-    opt.TokenValidationParameters = new()
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
-
-var app = builder.Build();
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
-app.UseCors();
-app.UseMiddleware<ErrorHandlerMiddleware>();
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseHttpsRedirection();
-}
+var app = Builder.ConfigureWebApp(builder);
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {
@@ -136,9 +51,9 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
 }).WithName("Register user");*/
 
 
-app.MapGet("/items", async (IMarketBoardApiController marketboardApiController) =>
+app.MapGet("/items", async (IRecipeController recipeController) =>
 {
-    var result = await marketboardApiController.GetAllItems().ToListAsync();
+    var result = await recipeController.GetAllItems().ToListAsync();
 
     ResponseDto apiResponse = new ResponseDto();
 
@@ -156,12 +71,9 @@ app.MapGet("/items", async (IMarketBoardApiController marketboardApiController) 
 })
 .WithName("get all items from db");
 
-
-
-//get an item based on item id
-app.MapGet("/item", async (IMarketBoardApiController marketboardApiController, int itemId) =>
+app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
 {
-    var result = await marketboardApiController.GetItemFromId(itemId);
+    var result = await recipeController.GetItemFromId(itemId);
 
     ResponseDto apiResponse = new ResponseDto();
 
@@ -179,9 +91,9 @@ app.MapGet("/item", async (IMarketBoardApiController marketboardApiController, i
 })
 .WithName("get info for a specific item");
 
-app.MapGet("/recipes", async (IMarketBoardApiController marketboardApiController) =>
+app.MapGet("/recipes", async (IRecipeController recipeController) =>
 {
-    var result = await marketboardApiController.GetAllRecipes().ToListAsync();
+    var result = await recipeController.GetAllRecipes().ToListAsync();
 
     ResponseDto apiResponse = new ResponseDto();
 
@@ -198,8 +110,7 @@ app.MapGet("/recipes", async (IMarketBoardApiController marketboardApiController
 })
 .WithName("get all recipes from db");
 
-//gets a singular recipe by recipe id
-app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController, int? recipeId, int? itemId, string? recipeName) =>
+app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, int? itemId, string? recipeName) =>
 {
     var result = new List<Recipe>();
     if (recipeId == null && itemId == null && recipeName == null)
@@ -208,20 +119,18 @@ app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController,
     }
     if (recipeId != null)
     {
-        result = await marketboardApiController.GetRecipesByIds(new List<int> { recipeId.Value }).ToListAsync();
+        result = await recipeController.GetRecipesByIds(new List<int> { recipeId.Value }).ToListAsync();
     }
     else if (itemId != null)
     {
-        result = await marketboardApiController.GetRecipesByItemIds(new List<int> { itemId.Value }).ToListAsync();
+        result = await recipeController.GetRecipesByItemIds(new List<int> { itemId.Value }).ToListAsync();
     }
     else if (recipeName != null)
     {
-        result = await marketboardApiController.GetRecipesFromNameCollIncludeIngredients(new List<string> { recipeName }).ToListAsync();
+        result = await recipeController.GetRecipesFromNameCollIncludeIngredients(new List<string> { recipeName }).ToListAsync();
     }
 
-
     ResponseDto apiResponse = new ResponseDto();
-
 
     if (result.Count > 0)
     {
@@ -232,102 +141,111 @@ app.MapGet("/recipe", async (IMarketBoardApiController marketboardApiController,
     }
     apiResponse.message = "Not Found";
     return Results.NotFound(apiResponse);
-
-
-
 })
 .WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
-
-
-app.MapGet("/marketboard-entries", [Authorize] async (IMarketBoardApiController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
+app.MapGet("/marketboard/{itemName}", [Authorize] async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
 {
-    return await marketboardApiController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync(); ;
+    try
+    {
+        var result = await marketboardApiController.GetLatestUniversalisQueryForItems(new List<string>() { itemName }, worldName).ToListAsync();
+        if (result.Count > 0) { return Results.Ok(result); }
+        return Results.NotFound("No marketboard entries found");
+    }
+    catch (Exception e)
+    {
+        return Results.StatusCode(500);
+    }
 })
 .WithName("get marketboard entries for item");
 
-
-
-
-
-app.MapPut("/import-all-recipes", [Authorize] async (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
+app.MapGet("/marketboard", [Authorize] async (IMarketBoardController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
 {
-
-    var Recipes = await xivApiController.ImportRecipiesAndItems();
-    var result2 = await universalisApiController.ImportMarketableItems();
-
-    return "";
+    try
+    {
+        var result = await marketboardApiController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync();
+        if (result.Count > 0)
+        {
+            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = result });
+        }
+        return Results.NotFound("No marketboard entries found");
+    }
+    catch (Exception e)
+    {
+        return Results.Problem(e.Message, null, 500);
+    }
 })
-.WithName("import all recipes");
+.WithName("get marketboard entries for list of items item");
 
-app.MapPut("/reImport-all-recipes", [Authorize] async (IXivApiController xivApiController) =>
+app.MapPut("/import/marketboard", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, IRecipeController recipeController,
+    int itemId, string worldName, int nrOfEntries, int nrOfListings) =>
 {
-
-    var worlds = await xivApiController.ImportRecipiesAndItems();
-
-    return "";
-})
-.WithName("reset and import all recipes");
-
-
-
-app.MapPut("/importWorlds", [Authorize] async (IXivApiController xivApiController) =>
-{
-
-    var result = await xivApiController.ImportAllWorldsAndDataCenters();
-
-    return result;
-})
-.WithName("import worlds");
-
-app.MapPut("/importItemEntry", [Authorize] async (int Itemid, string WorldName, int entries, int listings, IUniversalisApiController universalisApiController, IMarketBoardApiController marketboardApiController) =>
-{
-
-    var world = await marketboardApiController.GetWorldFromName(WorldName);
-    var item = await marketboardApiController.GetItemFromId(Itemid);
+    var world = await dataCentreController.GetWorldFromName(worldName);
+    var item = await recipeController.GetItemFromId(itemId);
 
     if (world != null && item != null)
     {
-        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, entries, listings);
-        return JsonConvert.SerializeObject(result);
+        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, nrOfEntries, nrOfListings);
+
+        if (result != null)
+        {
+
+            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry>() { result } });
+        }
     }
-
-
-    return "";
+    return Results.NotFound("World or Item not found");
 })
 .WithName("import item entry");
 
-app.MapPut("/import-items-for-world", [Authorize] async (IUniversalisApiController universalisApiController, IMarketBoardApiController marketboardApiController, string worldName) =>
+app.MapPut("/import/marketboard/{worldName}", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, string worldName) =>
 {
 
-    var world = await marketboardApiController.GetWorldFromName(worldName);
+    var world = await dataCentreController.GetWorldFromName(worldName);
     if (world != null)
     {
-        return await universalisApiController.ImportUniversalisDataForAllItemsOnWorld(world);
+        try
+        {
+            await universalisApiController.ImportUniversalisDataForAllItemsOnWorld(world);
+            return Results.Ok("Import successful");
+        }
+        catch (Exception e)
+        {
+            return Results.Problem(e.Message, null, 500);
+        }
     }
-
-
-    return "error world not found";
+    return Results.NotFound("World not found");
 })
 .WithName("import items for world");
 
-
-app.MapPut("/set-crafted-on-items", [Authorize] async (IXivApiController xivApiController, IMarketBoardApiController marketboardApiController) =>
+app.MapPut("/importWorlds", [Authorize] async (IXivApiController xivApiController) =>
 {
+    try
+    {
+        await xivApiController.ImportAllWorldsAndDataCenters();
+        return Results.Ok("Import successful");
+    }
+    catch (Exception e)
+    {
+        return Results.Problem(e.Message, null, 500);
 
-    var result = await marketboardApiController.SetCraftableItemsFromRecipes();
-    return "";
-    //return JsonConvert.SerializeObject(recipies.Result);
+    }
 })
-.WithName("update items crafted");
+.WithName("import worlds");
 
-app.MapPut("/import-marketstatus-items", [Authorize] async (IUniversalisApiController universalisApiController) =>
+app.MapPut("/import/recipes", [Authorize] async (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
 {
+    try
+    {
+        await xivApiController.ImportRecipiesAndItems();
+        await universalisApiController.ImportMarketableItems();
+        return Results.Ok();
+    }
+    catch (Exception e)
+    {
+        return Results.Problem(e.Message, null, 500);
+    }
 
-    var result = await universalisApiController.ImportMarketableItems();
-    return "";
-    //return JsonConvert.SerializeObject(recipies.Result);
-}).WithName("import marketable status for items");
+})
+.WithName("import all recipes");
 
-//app.Urls.Add("https://localhost:1923");
 app.Run();

@@ -25,14 +25,17 @@ namespace XIVMarketBoard_Api.Controller
 
     public class UniversalisApiController : IUniversalisApiController
     {
-        private readonly IMarketBoardApiController _dbController;
+        private readonly IMarketBoardController _marketBoardApiController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
+        private readonly IRecipeController _recipeController;
 
-        public UniversalisApiController(IMarketBoardApiController dbController, IUniversalisApiRepository universalisApiRepositiory)
+        public UniversalisApiController(IMarketBoardController dbController, IUniversalisApiRepository universalisApiRepositiory, IRecipeController recipeController)
         {
-            _dbController = dbController;
+            _marketBoardApiController = dbController;
             _universalisApiRepository = universalisApiRepositiory;
+            _recipeController = recipeController;
         }
+
         public async Task<string> ImportMarketableItems()
         {
 
@@ -42,10 +45,10 @@ namespace XIVMarketBoard_Api.Controller
                 try
                 {
                     var res = await response.Content.ReadAsStringAsync();
-                    var items = _dbController.GetItemsByIds(JsonConvert.DeserializeObject<List<int>>(res)).ToListAsync().Result;
+                    var items = _recipeController.GetItemsByIds(JsonConvert.DeserializeObject<List<int>>(res)).ToListAsync().Result;
                     items.ForEach(item => item.IsMarketable = true);
 
-                    return await _dbController.UpdateItems(items);
+                    return await _recipeController.UpdateItems(items);
                 }
                 catch (Exception e)
                 {
@@ -70,8 +73,16 @@ namespace XIVMarketBoard_Api.Controller
                         throw new NullReferenceException();
                     }
                     var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
-                    uniEntry = await _dbController.GetOrCreateUniversalisQuery(uniEntry);
-                    return uniEntry;
+                    var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
+                    if (resultList.Count() > 0)
+                    {
+                        return resultList.First();
+
+                    }
+                    else
+                    {
+                        throw new Exception("No universalis entry created");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -85,13 +96,14 @@ namespace XIVMarketBoard_Api.Controller
         {
             try
             {
+                var calloutSize = 100;
                 List<UniversalisEntry> uniList = new List<UniversalisEntry>();
-                var itemList = _dbController.GetAllItems().ToListAsync().Result;
+                var itemList = _recipeController.GetAllItems().ToListAsync().Result;
 
-                for (var amount = 0; itemList.Count() >= amount; amount += 100)
+                for (var amount = 0; itemList.Count() >= amount; amount += calloutSize)
                 {
 
-                    var itemColl = itemList.Skip(amount).Take(100);
+                    var itemColl = itemList.Skip(amount).Take(calloutSize);
                     var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
                     if (response.IsSuccessStatusCode)
                     {
@@ -108,8 +120,6 @@ namespace XIVMarketBoard_Api.Controller
                                 var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
                                 uniList.Add(CreateUniversalisEntry(i, world, a));
                             }
-                            //uniList.AddRange(itemColl.Select(i => CreateUniversalisEntry(parsedResult.items.Where(a => a.itemId == i.Id.ToString()).First(), world, i)));
-
                         }
                         catch (Exception e)
                         {
@@ -118,13 +128,13 @@ namespace XIVMarketBoard_Api.Controller
 
                     }
                     else throw new Exception("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+
+                    //wait for api ratelimiting
                     await Task.Delay(80);
-                    amount += 100;
+                    amount += calloutSize;
                 }
 
-                var result = await _dbController.GetOrCreateUniversalisQueries(uniList);
-                //uniList.ForEach(async i => i = await _dbController.GetOrCreateUniversalisQuery(i));
-
+                var result = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
                 return "Imported all items on world " + world.Name;
 
             }
