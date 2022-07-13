@@ -68,7 +68,6 @@ namespace XIVMarketBoard_Api
                     ServerVersion.AutoDetect(
                         builder.Configuration.GetConnectionString("XivDbConnectionString")
                     ),
-                    //builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)
                     options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
 
                 )
