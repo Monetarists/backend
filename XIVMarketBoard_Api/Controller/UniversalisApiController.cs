@@ -71,47 +71,42 @@ namespace XIVMarketBoard_Api.Controller
         }
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
-            try
-            {
-                var calloutSize = 100;
-                List<UniversalisEntry> uniList = new List<UniversalisEntry>();
-                var itemList = _recipeController.GetAllItems().ToListAsync().Result;
 
-                for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
+            var calloutSize = 100;
+            List<UniversalisEntry> uniList = new List<UniversalisEntry>();
+            var itemList = _recipeController.GetAllItems().ToListAsync().Result;
+
+            for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
+            {
+
+                var itemColl = itemList.Skip(amount).Take(calloutSize);
+                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
+                if (response.IsSuccessStatusCode)
                 {
-
-                    var itemColl = itemList.Skip(amount).Take(calloutSize);
-                    var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
-                    if (response.IsSuccessStatusCode)
+                    var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
+                    if (parsedResult == null)
                     {
-                        var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
-                        if (parsedResult != null)
-                        {
-                            throw new ArgumentNullException("response from universalis is null");
-                        }
-                        foreach (var i in parsedResult.items)
-                        {
-                            var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
-                            uniList.Add(CreateUniversalisEntry(i, world, a));
-                        }
+                        throw new ArgumentNullException("response from universalis is null");
                     }
-                    else
+                    foreach (var i in parsedResult.items)
                     {
-                        throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+                        var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
+                        uniList.Add(CreateUniversalisEntry(i, world, a));
                     }
-
-                    //wait for api ratelimiting
-                    await Task.Delay(80);
-                    amount += calloutSize;
                 }
-                return "Imported all items on world " + world.Name;
+                else
+                {
+                    throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
+                }
 
+                //wait for api ratelimiting
+                await Task.Delay(80);
+                amount += calloutSize;
             }
+            return "Imported all items on world " + world.Name;
 
-            catch (Exception e)
-            {
-                throw new Exception("Unhandeled exception white importing universalisdata " + e.Message);
-            }
+
+
 
 
         }
