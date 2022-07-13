@@ -15,9 +15,10 @@ namespace XIVMarketBoard_Api.Controller
     public interface IMarketBoardController
     {
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId);
+        Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
+
         Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
         IAsyncEnumerable<UniversalisEntry?> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
-        Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
     }
 
     public class MarketBoardController : IMarketBoardController
@@ -27,7 +28,6 @@ namespace XIVMarketBoard_Api.Controller
         {
             _xivContext = xivContext;
         }
-        #region getFromContext
 
 
         public async Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId) => await _xivContext.UniversalisEntries
@@ -41,32 +41,7 @@ namespace XIVMarketBoard_Api.Controller
             .OrderByDescending(p => p.QueryDate)
             .Where(i => i.World.Name == worldName && itemNames.Contains(i.Item.Name)).AsAsyncEnumerable();
 
-        /*public static async Task<MbPost> getMbPostFromItemId(int itemId)
-{
 
-        return await _xivContext.Posts.FirstOrDefaultAsync(r => r.Item.Id == itemId);
-
-   TODO: Rewrite to fetch universalisquery 
-}*/
-
-        #endregion
-
-
-        /*public static async Task<List<MbPost>> getMbPostsForItem(int itemId)
-        {
-
-                return await _xivContext.Posts.Where(r => r.Item.Id == itemId).ToListAsync();
-
-         rewrite to fetch latest universalisquery for item
-        }*/
-
-
-
-
-
-
-
-        #region universalis
         public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
         {
             foreach (var q in qList)
@@ -80,13 +55,6 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     q.Item = await _xivContext.Items.FindAsync(q.Item.Id) ?? new();
                     q.World = await _xivContext.Worlds.FindAsync(q.World.Id) ?? new();
-                    /* obsolete due to bug in universalis api
-                    List<MbPost> mbPostList = new List<MbPost>();
-                    foreach (MbPost mbPost in q.Posts)
-                    {
-                        mbPostList.Add(await CreateMbPost(mbPost, _xivContext));
-                    }
-                    q.Posts = mbPostList;*/
                     _xivContext.UniversalisEntries.Add(q);
                 }
             }
@@ -95,28 +63,5 @@ namespace XIVMarketBoard_Api.Controller
 
 
         }
-
-        //obsolete due to bug in universalis api
-        public async Task<MbPost> GetOrCreateMbPost(MbPost tempMbPost, XivDbContext _xivContext)
-        {
-
-            var mbPost = await _xivContext.Posts.FirstOrDefaultAsync(r => r.Id == tempMbPost.Id);
-            if (mbPost == null)
-            {
-                _xivContext.Add(tempMbPost);
-                await _xivContext.SaveChangesAsync();
-                return tempMbPost;
-            }
-            return mbPost;
-
-
-        }
-
-
-
-        #endregion
-
-
-
     }
 }
