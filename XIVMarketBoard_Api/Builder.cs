@@ -63,9 +63,16 @@ namespace XIVMarketBoard_Api
             services.AddTransient<IMapper, Mapper>();
 
             services.AddDbContext<XivDbContext>(options =>
-                        options.UseMySql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
-                        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XivDbConnectionString")),
-                            builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)));
+                options.UseMySql(
+                    builder.Configuration.GetConnectionString("XivDbConnectionString"),
+                    ServerVersion.AutoDetect(
+                        builder.Configuration.GetConnectionString("XivDbConnectionString")
+                    ),
+                    //builder => builder.MigrationsAssembly(typeof(XivDbContext).Assembly.FullName)
+                    options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
+
+                )
+            );
 
             services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
             builder.Services.AddAuthorization();
