@@ -140,7 +140,7 @@ app.MapGet("/marketboard/{itemName}", [Authorize] async (IMarketBoardController 
 })
 .WithName("get marketboard entries for item");
 
-app.MapGet("/marketboard", [Authorize] async (IMarketBoardController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
+app.MapGet("/marketboard", async (IMarketBoardController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
 {
     try
     {
