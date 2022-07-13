@@ -11,7 +11,6 @@
     public interface IJwtUtils
     {
         public string GenerateToken(User user);
-        //public int? ValidateToken(string token);
     }
 
     public class JwtUtils : IJwtUtils
@@ -26,7 +25,6 @@
         public string GenerateToken(User user)
         {
             // generate token that is valid for 1 days
-            var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_appSettings.Key);
             var issuer = _appSettings.Issuer;
             var audience = _appSettings.Audience;
