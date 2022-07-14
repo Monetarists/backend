@@ -8,7 +8,7 @@ public class UniversalisResponseItems
     public IEnumerable<UniversalisListings> listings { get; set; } = new UniversalisListings[] { };
     public IEnumerable<UniversalisRecentHistory> recentHistory { get; set; } = new UniversalisRecentHistory[] { };
     public double currentAveragePrice { get; set; }
-    public double currentAveragePrinceNQ { get; set; }
+    public double currentAveragePriceNQ { get; set; }
     public double currentAveragePriceHQ { get; set; }
     public double regularSaleVelocity { get; set; }
     public double nqSaleVelocity { get; set; }
