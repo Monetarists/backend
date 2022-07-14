@@ -58,7 +58,7 @@ app.MapGet("/items", async (IRecipeController recipeController) =>
 })
 .WithName("get all items from db");
 
-app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
+app.MapGet("/item/{itemId}", async (IRecipeController recipeController, int itemId) =>
 {
     var result = await recipeController.GetItemFromId(itemId);
     ResponseDto apiResponse = new ResponseDto();
@@ -77,7 +77,7 @@ app.MapGet("/item", async (IRecipeController recipeController, int itemId) =>
 
 app.MapGet("/recipes", async (IRecipeController recipeController) =>
 {
-    var result = await recipeController.GetAllRecipes().ToListAsync();
+    var result = await recipeController.GetAllRecipesList();
     ResponseDto apiResponse = new ResponseDto();
 
     if (result.Count > 0)
@@ -125,12 +125,13 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
 })
 .WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
-app.MapGet("/marketboard/{itemName}", [Authorize] async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
+app.MapGet("/marketboard/{worldName}/{itemName}", [Authorize] async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
 {
     try
     {
         var result = await marketboardApiController.GetLatestUniversalisQueryForItems(new List<string>() { itemName }, worldName).ToListAsync();
         if (result.Count > 0) { return Results.Ok(result); }
+
         return Results.NotFound("No marketboard entries found");
     }
     catch (Exception e)
