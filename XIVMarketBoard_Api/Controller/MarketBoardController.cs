@@ -19,6 +19,8 @@ namespace XIVMarketBoard_Api.Controller
 
         Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
         IAsyncEnumerable<UniversalisEntry?> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
+        Task<List<UniversalisEntry>> GetRelevantUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
+        //Task<UniversalisEntry> GetUpdatedUniversalisDataForItems(List<Item> itemList, World world);
     }
 
     public class MarketBoardController : IMarketBoardController
@@ -36,29 +38,67 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName) => await _xivContext.UniversalisEntries
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
             .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name == itemName);
+        public async Task<List<UniversalisEntry>> GetRelevantUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName) => await _xivContext.UniversalisEntries
+            .Where(u => u.World.Name == worldName && itemNames.Contains(u.Item.Name) && u.QueryDate >= DateTime.UtcNow.AddHours(-6)).Include(a => a.Posts).Include(b => b.SaleHistory).ToListAsync();
         public IAsyncEnumerable<UniversalisEntry?> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName) => _xivContext.UniversalisEntries
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
             .OrderByDescending(p => p.QueryDate)
             .Where(i => i.World.Name == worldName && itemNames.Contains(i.Item.Name)).AsAsyncEnumerable();
 
+        /*public async Task<UniversalisEntry> GetUpdatedUniversalisDataForItems(List<Item> itemList, World world)
+        {
+            var a = await GetRelevantUniversalisQueryForItems(itemList.Select(i => i.Name).ToList(), world.Name);
+            var resultItems = a.Select(a => a.Item).ToList();
 
+            var notFoundItems = itemList.Select(item => resultItems.Contains(item) == false);
+
+            var distinctUniversalisList = a.DistinctBy(a => a.Item).ToList();
+            distinctUniversalisList.AddRange(await _universalisApiController.ImportUniversalisDataForItemAndWorld(null, null, 0, 0));
+
+        }*/
+
+        //TODO rename and use only for large datasets. Smaller datasets should probobly not load the entire database into memory 
+        //and can just doublecheck with _xivContext.firstordefault per item
         public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
         {
+
+            var currentPosts = _xivContext.Posts.ToList();
+            var currentEntries = _xivContext.UniversalisEntries.ToList();
+            var currentItems = _xivContext.Items.ToList();
+            var currentWorlds = _xivContext.Worlds.ToList();
+
+            var resultList = new List<UniversalisEntry>();
             foreach (var q in qList)
             {
-                var universlisEntry = await _xivContext.UniversalisEntries
-                    .FirstOrDefaultAsync(r =>
+
+                var universlisEntry = currentEntries.FirstOrDefault(r =>
                         r.Item.Id == q.Item.Id &&
                         r.World.Id == q.World.Id &&
                         r.LastUploadDate == q.LastUploadDate);
-                if (universlisEntry == null)
+                if (universlisEntry is null)
                 {
-                    q.Item = await _xivContext.Items.FindAsync(q.Item.Id) ?? new();
-                    q.World = await _xivContext.Worlds.FindAsync(q.World.Id) ?? new();
-                    _xivContext.UniversalisEntries.Add(q);
+                    var tempList = new List<MbPost>();
+                    foreach (var p in q.Posts)
+                    {
+                        tempList.Add(currentPosts.FirstOrDefault(r => r.Id == p.Id) ?? p);
+
+                        if (!currentPosts.Contains(p)) { currentPosts.Add(p); }
+                    }
+                    q.Posts = tempList;
+                    q.Item = currentItems.FirstOrDefault(r => r.Id == q.Item.Id) ?? q.Item;
+                    q.World = currentWorlds.FirstOrDefault(r => r.Id == q.World.Id) ?? q.World;
+                    if (!currentItems.Contains(q.Item)) { currentItems.Add(q.Item); }
+                    if (!currentEntries.Contains(q)) { currentEntries.Add(q); }
+                    resultList.Add(q);
                 }
             }
-            await _xivContext.SaveChangesAsync();
+            //Planetscale db errors when too many recipes are saved at once
+            for (var i = 0; resultList.Count > i; i += 100)
+            {
+                var tempList = resultList.Skip(i).Take(100).ToList();
+                _xivContext.AddRange(tempList);
+                await _xivContext.SaveChangesAsync();
+            }
             return qList;
 
 

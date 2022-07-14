@@ -29,9 +29,9 @@ namespace XIVMarketBoard_Api.Controller
         IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId);
         IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemIds);
         IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames);
-        Task<string> ResetAndSaveRecipesToDb(IEnumerable<Recipe> RecipeList);
         Task<string> SetCraftableItemsFromRecipes();
         Task<string> UpdateItems(List<Item> iList);
+        Task<ICollection<Recipe>> GetAllRecipesList();
     }
     public class RecipeController : IRecipeController
     {
@@ -46,6 +46,7 @@ namespace XIVMarketBoard_Api.Controller
         public IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemIds) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => itemIds.Contains(r.Item.Id)).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetAllRecipes() => _xivContext.Set<Recipe>().Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).AsAsyncEnumerable();
+        public async Task<ICollection<Recipe>> GetAllRecipesList() => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => r.Id != null).ToListAsync();
         public async Task<Dictionary<int, string>> GetAllRecipeNames() => await _xivContext.Recipes.Select(recipe => new KeyValuePair<int, string>(recipe.Id, recipe.Name)).ToDictionaryAsync(r => r.Key, r => r.Value);
         public IAsyncEnumerable<Recipe> GetAllRecipesIncludeItem() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames) => _xivContext.Recipes.Include(i => i.Ingredients).ThenInclude(p => p.Item).Where(r => recipeNames.Contains(r.Name)).ToAsyncEnumerable();
@@ -60,7 +61,6 @@ namespace XIVMarketBoard_Api.Controller
         {
             try
             {
-                //_xivContext.Update(iList);
                 await _xivContext.SaveChangesAsync();
                 return "Success";
             }
@@ -74,7 +74,6 @@ namespace XIVMarketBoard_Api.Controller
             try
             {
                 var recipeColl = GetAllRecipesIncludeItem();
-                //_xivContext.UpdateRange(recipeColl);
                 await foreach (var r in recipeColl)
                 {
                     r.Item.CanBeCrafted = true;
@@ -89,94 +88,58 @@ namespace XIVMarketBoard_Api.Controller
             }
 
         }
-        public async Task<string> ResetAndSaveRecipesToDb(IEnumerable<Recipe> RecipeList)
-        {
 
-            _xivContext.Database.ExecuteSqlRaw(@"SET FOREIGN_KEY_CHECKS = 0; Truncate table Recipes;Truncate table Ingredients;Truncate table Items; SET FOREIGN_KEY_CHECKS = 1");
-            List<Ingredient> ingredientList = new List<Ingredient>();
-            foreach (var recipe in RecipeList)
-            {
-                foreach (var ingredient in recipe.Ingredients)
-                {
-                    ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item);
-                }
-
-                recipe.Item = await GetOrCreateItemFromContext(recipe.Item);
-                recipe.Item.CanBeCrafted = true;
-                recipe.job = await GetOrCreateJobFromContext(recipe.job);
-                _xivContext.Add(recipe);
-            }
-
-            await _xivContext.SaveChangesAsync();
-
-            return "successfully saved " + RecipeList.Count() + "recipes";
-
-        }
-
+        //TODO rename and use only for large datasets. Smaller datasets should probobly not load the entire database into memory 
+        //and can just doublecheck with _xivContext.firstordefault per item
         public async Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList)
         {
+            //TODO call for a list of marketable items and insert everything correctly from the start
+            //TODO Clean up the code and make it more readable look at universalis controller // bryt ut till createrecipe och kör firstordefault() ?? createRecipe()
+            var currentItems = await _xivContext.Items.ToListAsync();
+            var currentRecipes = await _xivContext.Recipes.ToListAsync();
+            var currentJobs = await _xivContext.Jobs.ToListAsync();
+            var recipeList = new List<Recipe>();
 
             foreach (var recipe in RecipeList)
             {
-                var currentRecipe = await _xivContext.Recipes.FirstOrDefaultAsync(r => r.Id == recipe.Id);
+                var currentRecipe = currentRecipes.FirstOrDefault(r => r.Id == recipe.Id);
                 if (currentRecipe == null)
                 {
                     foreach (var ingredient in recipe.Ingredients)
                     {
-                        ingredient.Item = await GetOrCreateItemFromContext(ingredient.Item);
+                        ingredient.Item = currentItems.FirstOrDefault(i => i.Id == ingredient.Item.Id) ?? ingredient.Item;
+                        ingredient.Item.IsMarketable = ingredient.Item.IsMarketable ?? false;
+                        if (!currentItems.Contains(ingredient.Item)) { currentItems.Add(ingredient.Item); }
                         if (ingredient.Item.CanBeCrafted == null)
                         {
                             ingredient.Item.CanBeCrafted = false;
                         }
                     }
 
-                    recipe.Item = await GetOrCreateItemFromContext(recipe.Item);
+                    recipe.Item = currentItems.FirstOrDefault(i => i.Id == recipe.Item.Id) ?? recipe.Item;
+                    recipe.Item.IsMarketable = recipe.Item.IsMarketable ?? false;
+
                     if (recipe.Item.CanBeCrafted != true)
                     {
                         recipe.Item.CanBeCrafted = true;
                     }
-                    recipe.job = await GetOrCreateJobFromContext(recipe.job);
-                    _xivContext.Add(recipe);
-                }
-                else
-                {
-                    //add check for ingredients here later
-                }
+                    recipe.job = currentJobs.FirstOrDefault(j => j.Id == recipe.job.Id) ?? recipe.job;
+                    if (!currentItems.Contains(recipe.Item)) { currentItems.Add(recipe.Item); }
+                    if (!currentJobs.Contains(recipe.job)) { currentJobs.Add(recipe.job); }
 
-
+                    recipeList.Add(recipe);
+                }
             }
 
-            await _xivContext.SaveChangesAsync();
-
+            //Planetscale db errors when too many recipes are saved at once
+            for (var i = 0; recipeList.Count > i; i += 100)
+            {
+                var tempList = recipeList.Skip(i).Take(100).ToList();
+                _xivContext.AddRange(tempList);
+                await _xivContext.SaveChangesAsync();
+            }
             return "successfully saved " + RecipeList.Count() + "recipes";
 
-        }
-        private async Task<Item> GetOrCreateItemFromContext(Item item)
-        {
-
-            var tempItem = await _xivContext.Items.FindAsync(item.Id);
-            if (tempItem == null)
-            {
-                item.IsMarketable = false;
-                _xivContext.Add(item);
-                await _xivContext.SaveChangesAsync();
-                return item;
-            }
-
-            return tempItem;
-        }
-
-        private async Task<Job> GetOrCreateJobFromContext(Job job)
-        {
-            var tempJob = await _xivContext.Jobs.FindAsync(job.Id);
-            if (tempJob == null)
-            {
-                _xivContext.Add(job);
-                await _xivContext.SaveChangesAsync();
-                return job;
-            }
-
-            return tempJob;
         }
     }
 }

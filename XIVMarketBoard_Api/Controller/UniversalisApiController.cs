@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Text;
 using XIVMarketBoard_Api.Data;
-using System;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models.Universalis;
@@ -20,11 +20,12 @@ namespace XIVMarketBoard_Api.Controller
         Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
         Task<string> ImportMarketableItems();
-
+        Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings);
     }
 
     public class UniversalisApiController : IUniversalisApiController
     {
+        private int calloutSize = 100;
         private readonly IMarketBoardController _marketBoardApiController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
         private readonly IRecipeController _recipeController;
@@ -35,6 +36,8 @@ namespace XIVMarketBoard_Api.Controller
             _universalisApiRepository = universalisApiRepositiory;
             _recipeController = recipeController;
         }
+
+
 
         public async Task<string> ImportMarketableItems()
         {
@@ -57,11 +60,8 @@ namespace XIVMarketBoard_Api.Controller
             if (response.IsSuccessStatusCode)
             {
 
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync());
-                if (parsedResult != null)
-                {
-                    throw new ArgumentNullException("response from universalis is null");
-                }
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+
                 var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
                 var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
                 return resultList.First();
@@ -69,46 +69,37 @@ namespace XIVMarketBoard_Api.Controller
             }
             throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
         }
-        public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
+        public async Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings)
         {
-
-            var calloutSize = 100;
             List<UniversalisEntry> uniList = new List<UniversalisEntry>();
-            var itemList = _recipeController.GetAllItems().ToListAsync().Result;
+            //TODO fix an get marketable items only
 
             for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
             {
 
                 var itemColl = itemList.Skip(amount).Take(calloutSize);
                 var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
-                if (response.IsSuccessStatusCode)
-                {
-                    var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync());
-                    if (parsedResult == null)
-                    {
-                        throw new ArgumentNullException("response from universalis is null");
-                    }
-                    foreach (var i in parsedResult.items)
-                    {
-                        var a = itemColl.FirstOrDefault(b => b.Id.ToString() == i.itemId);
-                        uniList.Add(CreateUniversalisEntry(i, world, a));
-                    }
-                }
-                else
+                if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
                 }
-
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new ArgumentNullException("item is null"))));
                 //wait for api ratelimiting
                 await Task.Delay(80);
-                amount += calloutSize;
+
             }
+            var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
+
+            return resultList;
+        }
+        public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
+        {
+            var uniList = new List<UniversalisEntry>();
+            //TODO fix an get marketable items only
+            var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => (bool)r.IsMarketable).ToList();
+            var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world, 5, 5);
             return "Imported all items on world " + world.Name;
-
-
-
-
-
         }
         public async Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world)
         {
@@ -146,7 +137,7 @@ namespace XIVMarketBoard_Api.Controller
                  Posts = CreateMbPostEntries(responseItem.listings).ToList(), // list listings
                  SaleHistory = CreateSaleHistoryEntries(responseItem.recentHistory).ToList(), //list recentHistory
                  CurrentAveragePrice = responseItem.currentAveragePrice,
-                 CurrentAveragePrinceNQ = responseItem.currentAveragePrinceNQ,
+                 CurrentAveragePrinceNQ = responseItem.currentAveragePriceNQ,
                  CurrentAveragePriceHQ = responseItem.currentAveragePriceHQ,
                  RegularSaleVelocity = responseItem.regularSaleVelocity,
                  NqSaleVelocity = responseItem.nqSaleVelocity,
@@ -188,7 +179,5 @@ namespace XIVMarketBoard_Api.Controller
                     BuyerName = i.buyerName,
                     HighQuality = i.hq
                 });
-
-
     }
 }
