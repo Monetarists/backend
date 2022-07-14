@@ -12,7 +12,7 @@ namespace XIVMarketBoard_Api.Entities
         public DateTime SaleDate { get; set; }
         //public World World { get; set; }
         public int Quantity { get; set; }
-        public string BuyerName { get; set; } = "";
+        public string? BuyerName { get; set; } = "";
         public double Total { get; set; }
     }
 }
