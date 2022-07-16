@@ -125,7 +125,7 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
 })
 .WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
-app.MapGet("/marketboard/{worldName}/{itemName}", [Authorize] async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
+app.MapGet("/marketboard/{worldName}/{itemName}", async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
 {
     try
     {
@@ -200,7 +200,7 @@ app.MapPut("/import/marketboard/{worldName}", [Authorize] async (IUniversalisApi
 })
 .WithName("import items for world");
 
-app.MapPut("/importWorlds", [Authorize] async (IXivApiController xivApiController) =>
+app.MapPut("/import/worlds", [Authorize] async (IXivApiController xivApiController) =>
 {
     try
     {
