@@ -36,7 +36,7 @@ namespace XIVMarketBoard_Api.Controller
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
             .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Id == worldId && i.Item.Id == itemId);
         public async Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName) => await _xivContext.UniversalisEntries
-            .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10))
+            .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10)).Include(c => c.Item)
             .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name == itemName);
         public async Task<List<UniversalisEntry>> GetRelevantUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName) => await _xivContext.UniversalisEntries
             .Where(u => u.World.Name == worldName && itemNames.Contains(u.Item.Name) && u.QueryDate >= DateTime.UtcNow.AddHours(-6)).Include(a => a.Posts).Include(b => b.SaleHistory).ToListAsync();
