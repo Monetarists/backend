@@ -125,12 +125,29 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
 })
 .WithName("get info for a specific recipe based on recipe/item-id or recipe name");
 
-app.MapGet("/marketboard/{worldName}/{itemName}", async (IMarketBoardController marketboardApiController, string itemName, string worldName) =>
+app.MapGet("/marketboard/{worldName}/{itemName}", async (
+    IDataCentreController dataCentreController, IRecipeController recipeController,
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController,
+    string itemName, string worldName) =>
 {
     try
     {
-        var result = await marketboardApiController.GetLatestUniversalisQueryForItems(new List<string>() { itemName }, worldName).ToListAsync();
-        if (result.Count > 0) { return Results.Ok(result); }
+        var item = await recipeController.GetItemFromNameAsync(itemName);
+        var world = await dataCentreController.GetWorldFromName(worldName);
+        if (item is null) return Results.NotFound("Item name gave no result");
+        if (world is null) return Results.NotFound("Item name gave no result");
+        var result = await marketboardController.GetLatestUniversalisQueryForItem(item.Name, world.Name);
+        if (result != null &&
+        DateTime.Now.AddHours(-6) > result.LastUploadDate &&
+        DateTime.Now.AddMinutes(-30) > result.QueryDate)
+        {
+            var updatedEntry = await universalisController.ImportUniversalisDataForItemAndWorld(item, world, 5, 5);
+            if (updatedEntry is null) return Results.NotFound("Universalis returned no entries for item");
+
+            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry> { updatedEntry } });
+        }
+
+        if (result != null) { return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry> { result } }); }
 
         return Results.NotFound("No marketboard entries found");
     }
@@ -141,15 +158,38 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (IMarketBoardController 
 })
 .WithName("get marketboard entries for item");
 
-app.MapGet("/marketboard", async (IMarketBoardController marketboardApiController, IEnumerable<string> itemNames, string worldName) =>
+app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreController, IRecipeController recipeController,
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController, string itemString, string worldName) =>
 {
     try
     {
-        var result = await marketboardApiController.GetLatestUniversalisQueryForItems(itemNames, worldName).ToListAsync();
+        var outdatedList = new List<Item>();
+        //var resultList = new List<UniversalisEntry>();
+        //var responseList = new List<UniversalisEntry>();
 
-        if (result.Count > 0)
+        var itemNames = itemString.Split(",").ToList();
+        var items = await recipeController.GetItemFromNameList(itemNames);
+        var world = await dataCentreController.GetWorldFromName(worldName);
+
+        if (items.Count == 0 || world is null) return Results.NotFound("items or world not found");
+        //items.ForEach(async i => resultList.Add(
+        //   await marketboardController.GetLatestUniversalisQueryForItem(i.Id, world.Id) ??
+        //   throw new ArgumentNullException("Null was returned from context")));
+        var resultList = await marketboardController.GetLatestUniversalisQueryForItems(itemNames, worldName);
+        //var resultList = await marketboardController.GetLatestUniversalisQueryForItems(items.Select(a => a.Name), worldName);
+        foreach (var entry in resultList)
         {
-            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = result });
+            if (DateTime.Now.AddHours(-6) > entry.LastUploadDate && DateTime.Now.AddMinutes(-30) > entry.QueryDate)
+            {
+                outdatedList.Add(entry.Item);
+            }
+        }
+
+        var responseList = resultList.Where(a => !outdatedList.Contains(a.Item)).ToList();
+        if (outdatedList.Count > 0) { responseList.AddRange(await universalisController.ImportUniversalisDataForItemListAndWorld(outdatedList, world, 5, 5)); }
+        if (responseList.Count() > 0)
+        {
+            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = responseList });
         }
         return Results.NotFound("No marketboard entries found");
     }
@@ -158,7 +198,7 @@ app.MapGet("/marketboard", async (IMarketBoardController marketboardApiControlle
         return Results.Problem(e.Message, null, 500);
     }
 })
-.WithName("get marketboard entries for list of items item");
+.WithName("get marketboard entries for list of items names");
 
 app.MapPut("/import/marketboard", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, IRecipeController recipeController,
     int itemId, string worldName, int nrOfEntries, int nrOfListings) =>
