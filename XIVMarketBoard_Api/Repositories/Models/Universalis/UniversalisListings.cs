@@ -11,7 +11,7 @@
         public string retainerName { get; set; } = "";
         public string retainerID { get; set; } = "";
         public string sellerID { get; set; } = "";
-        public string listingID { get; set; } = "";
+        public string? listingID { get; set; }
     }
 
 

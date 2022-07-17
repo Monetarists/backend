@@ -1,12 +1,10 @@
 ﻿using XIVMarketBoard_Api.Entities;
 using Newtonsoft.Json;
-using System.Net;
-using System.Text;
-using XIVMarketBoard_Api.Data;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models.Universalis;
+
+using System;
 
 namespace XIVMarketBoard_Api.Controller
 {
@@ -83,7 +81,13 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
                 }
+                var test = await response.Content.ReadAsStringAsync();
                 var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                if (parsedResult.items.Count() == 0)
+                {
+                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                    parsedResult.items = new List<UniversalisResponseItems>() { item };
+                }
                 uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new ArgumentNullException("item is null"))));
                 //wait for api ratelimiting
                 await Task.Delay(80);
@@ -159,7 +163,7 @@ namespace XIVMarketBoard_Api.Controller
 
             listings.Select(i => new MbPost()
             {
-                Id = i.listingID,
+                Id = i.listingID ?? Guid.NewGuid().ToString(),
                 RetainerName = i.retainerName,
                 SellerId = i.sellerID,
                 Price = i.pricePerUnit,
