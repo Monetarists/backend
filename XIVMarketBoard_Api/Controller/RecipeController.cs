@@ -21,6 +21,7 @@ namespace XIVMarketBoard_Api.Controller
         IAsyncEnumerable<Recipe> GetAllRecipesIncludeItem();
         Task<Item?> GetItemFromId(int itemId);
         Task<Item?> GetItemFromNameAsync(string itemName);
+        Task<List<Item>> GetItemFromNameList(IEnumerable<string> itemNames);
         IAsyncEnumerable<Item> GetItemsByIds(List<int> itemIds);
         Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList);
         Task<Recipe?> GetRecipeFromName(string recipeName);
@@ -57,6 +58,8 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<Dictionary<int, string>> GetAllItemNames() => await _xivContext.Items.Select(item => new KeyValuePair<int, string>(item.Id, item.Name)).ToDictionaryAsync(r => r.Key, r => r.Value);
 
         public async Task<Item?> GetItemFromNameAsync(string itemName) => await _xivContext.Items.FirstOrDefaultAsync(r => r.Name == itemName);
+        public async Task<List<Item>> GetItemFromNameList(IEnumerable<string> itemNames) => await _xivContext.Items.Where(r => itemNames.Contains(r.Name)).ToListAsync();
+
         public async Task<string> UpdateItems(List<Item> iList)
         {
             try
