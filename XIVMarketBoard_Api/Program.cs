@@ -4,6 +4,8 @@ using XIVMarketBoard_Api;
 using XIVMarketBoard_Api.Entities;
 using XIVMarketBoard_Api.Repositories.Models.Users;
 using Microsoft.AspNetCore.Authorization;
+using Elasticsearch.Net;
+using Nest;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = Builder.ConfigureServices(builder);
@@ -12,7 +14,7 @@ var app = Builder.ConfigureWebApp(builder);
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {
-    AuthenticateRequest req = new AuthenticateRequest() { UserName = username, Password = password };
+    AuthRequest req = new AuthRequest() { UserName = username, Password = password };
     var response = userController.Authenticate(req);
 
     if (response.Token != null)
@@ -21,6 +23,70 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
     }
     return Results.NotFound(response);
 }).WithName("Authenticate user");
+
+app.MapGet("/saveToElastic", async (
+    IDataCentreController dataCentreController, IRecipeController recipeController,
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController) =>
+{
+
+
+    var settings = new ConnectionSettings(new Uri("http://192.168.10.38:9200")).BasicAuthentication("elastic", "*WmMPtnYCU-XOIZNrot-").DefaultIndex("people");
+    settings.EnableApiVersioningHeader();
+
+
+    var client = new ElasticClient(settings);
+
+
+    var person = new XIVMarketBoard_Api.Entities.Job
+    {
+        Id = 1,
+        Name = "Martijn",
+    };
+
+    var indexResponse = client.IndexDocument(person);
+
+    var asyncIndexResponse = await client.IndexDocumentAsync(person);
+
+
+
+
+
+}).WithName("test elastic");
+
+app.MapGet("/searchElastic", async (
+    IDataCentreController dataCentreController, IRecipeController recipeController,
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController) =>
+{
+
+
+    var settings = new ConnectionSettings(new Uri("http://192.168.10.38:9200")).BasicAuthentication("elastic", "*WmMPtnYCU-XOIZNrot-").DefaultIndex("people");
+    settings.EnableApiVersioningHeader();
+
+
+    var client = new ElasticClient(settings);
+
+
+
+
+    var searchResponse = client.Search<XIVMarketBoard_Api.Entities.Job>(s => s
+        .From(0)
+        .Size(10)
+        .Query(q => q
+             .Match(m => m
+                .Field(f => f.Name)
+                .Query("Martijn")
+             )
+        )
+    );
+
+    var people = searchResponse.Documents;
+
+
+
+
+
+
+}).WithName("search elastic");
 
 /*app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
 {

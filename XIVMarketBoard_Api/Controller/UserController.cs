@@ -15,7 +15,7 @@ namespace XIVMarketBoard_Api.Controller
 {
     public interface IUserController
     {
-        AuthenticateResponse Authenticate(AuthenticateRequest model);
+        AuthenticateResponse Authenticate(AuthRequest model);
         IEnumerable<User> GetAll();
         User GetById(int id);
         void Register(RegisterRequest model);
@@ -38,7 +38,7 @@ namespace XIVMarketBoard_Api.Controller
             _mapper = mapper;
         }
 
-        public AuthenticateResponse Authenticate(AuthenticateRequest model)
+        public AuthenticateResponse Authenticate(AuthRequest model)
         {
             var user = _xivContext.Users.SingleOrDefault(x => x.UserName == model.UserName);
             // validate

@@ -2,7 +2,7 @@
 {
     using System.ComponentModel.DataAnnotations;
 
-    public class AuthenticateRequest
+    public class AuthRequest
     {
         [Required]
         public string UserName { get; set; }
