@@ -3,7 +3,13 @@
     public class XivApiResult
     {
         public int Id;
-        public string Name = "";
+        public string Name_de;
+        public string Name_en;
+        public string Name_fr;
+        public string Name_ja;
+        public int IconID;
+        public int IsExpert;
+        public int IsSpecializationRequired { get; set; }
         public XivApiClassJob ClassJob = new XivApiClassJob();
         public XivApiItem ItemResult = new XivApiItem();
         public int AmountResult;

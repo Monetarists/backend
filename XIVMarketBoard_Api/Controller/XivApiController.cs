@@ -40,7 +40,7 @@ namespace XIVMarketBoard_Api.Controller
             if (responseResult == null) { throw new ArgumentNullException("JsonConvert returned null object"); }
             foreach (var server in responseResult.Results)
             {
-                if (server.Name != "")
+                if (server.Name_en != "")
                 {
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
                     var resp = await responseWd.Content.ReadAsStringAsync();
@@ -49,7 +49,6 @@ namespace XIVMarketBoard_Api.Controller
                     {
                         throw new ArgumentNullException("JsonConvert returned null object");
                     }
-
                     if (apiResponse.InGame && apiResponse.Name_en != "")
                     {
                         var dcEntity = dataCenterList.FirstOrDefault(p => p.Id == apiResponse.DataCenter.Id);
@@ -89,45 +88,29 @@ namespace XIVMarketBoard_Api.Controller
             for (int i = 0; resultsTotal >= i; i += amount)
             {
                 var httpResponse = await _xivApiRepository.GetRecipesAsync(i, amount);
-                if (httpResponse.StatusCode == HttpStatusCode.OK)
+                if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    contentString = await httpResponse.Content.ReadAsStringAsync();
-                    try
-                    {
-                        var responseResults = JsonConvert.DeserializeObject<XivApiResponeResults>(contentString);
-
-                        if (responseResults != null)
-                        {
-                            resultList.AddRange(responseResults.Results);
-                            if (resultsTotal == 0)
-                            {
-                                resultsTotal = responseResults.Pagination.ResultsTotal;
-                            }
-                            await Task.Delay(100);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        return "error: " + e.Message;
-                    }
-
+                    throw new Exception("error" + httpResponse.StatusCode);
                 }
+                contentString = await httpResponse.Content.ReadAsStringAsync();
 
-                else
+                var responseResults = JsonConvert.DeserializeObject<XivApiResponeResults>(contentString);
+
+                if (responseResults == null)
                 {
-                    return "error" + httpResponse.StatusCode;
+                    throw new JsonException("JsonConvert returned null object");
                 }
+                resultList.AddRange(responseResults.Results);
+                if (resultsTotal == 0) { resultsTotal = responseResults.Pagination.ResultsTotal; }
+                await Task.Delay(100);
 
 
             }
-            try
-            {
-                var recipeList = CreateRecipes(resultList);
-                await _recipeController.GetOrCreateRecipes(recipeList);
+
+            var recipeList = CreateRecipes(resultList);
+            await _recipeController.GetOrCreateRecipes(recipeList);
 
 
-            }
-            catch (Exception e) { return "error" + e.Message; }
             return resultString;
 
         }
@@ -138,27 +121,74 @@ namespace XIVMarketBoard_Api.Controller
             resultList.Select(r => new Recipe
             {
                 Ingredients = CreateIngredientList(r).ToList(),
-                job = new Job { Id = r.ClassJob.Id, Name = r.ClassJob.Name_en },
+                job = new Job { Id = r.ClassJob.Id, Name_en = r.ClassJob.Name_en },
                 Id = r.Id,
-                Name = r.Name,
-                Item = new Item { Id = r.ItemResult.Id.Value, Name = r.ItemResult.Name },
+                Name_en = r.Name_en,
+                Name_de = r.Name_de,
+                Name_fr = r.Name_fr,
+                Name_ja = r.Name_ja,
+                Item = new Item
+                {
+                    Id = r.ItemResult.ID.Value,
+                    Name_en = r.ItemResult.Name_en,
+                    Name_de = r.ItemResult.Name_de,
+                    Name_fr = r.ItemResult.Name_fr,
+                    Name_ja = r.ItemResult.Name_ja,
+
+                    ItemSearchCategory = r.ItemResult.ItemSearchCategory != null ? createItemSearchCategory(r.ItemResult.ItemSearchCategory) : null,
+                    ItemUICategory = createItemUiCategory(r.ItemResult.ItemUICategory),
+                    CanBeHq = r.ItemResult.CanBeHq.Value,
+                },
                 AmountResult = r.AmountResult
             });
 
+
         private static IEnumerable<Ingredient> CreateIngredientList(XivApiResult r)
         {
-            if (r.ItemIngredient0.Id != null && r.ItemIngredient0.Name != null) yield return new Ingredient { Amount = r.AmountIngredient0, Item = new Item { Id = r.ItemIngredient0.Id.Value, Name = r.ItemIngredient0.Name } };
-            if (r.ItemIngredient1.Id != null && r.ItemIngredient1.Name != null) yield return new Ingredient { Amount = r.AmountIngredient1, Item = new Item { Id = r.ItemIngredient1.Id.Value, Name = r.ItemIngredient1.Name } };
-            if (r.ItemIngredient2.Id != null && r.ItemIngredient2.Name != null) yield return new Ingredient { Amount = r.AmountIngredient2, Item = new Item { Id = r.ItemIngredient2.Id.Value, Name = r.ItemIngredient2.Name } };
-            if (r.ItemIngredient3.Id != null && r.ItemIngredient3.Name != null) yield return new Ingredient { Amount = r.AmountIngredient3, Item = new Item { Id = r.ItemIngredient3.Id.Value, Name = r.ItemIngredient3.Name } };
-            if (r.ItemIngredient4.Id != null && r.ItemIngredient4.Name != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = new Item { Id = r.ItemIngredient4.Id.Value, Name = r.ItemIngredient4.Name } };
-            if (r.ItemIngredient5.Id != null && r.ItemIngredient5.Name != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = new Item { Id = r.ItemIngredient5.Id.Value, Name = r.ItemIngredient5.Name } };
-            if (r.ItemIngredient6.Id != null && r.ItemIngredient6.Name != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = new Item { Id = r.ItemIngredient6.Id.Value, Name = r.ItemIngredient6.Name } };
-            if (r.ItemIngredient7.Id != null && r.ItemIngredient7.Name != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = new Item { Id = r.ItemIngredient7.Id.Value, Name = r.ItemIngredient7.Name } };
-            if (r.ItemIngredient8.Id != null && r.ItemIngredient8.Name != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = new Item { Id = r.ItemIngredient8.Id.Value, Name = r.ItemIngredient8.Name } };
-            if (r.ItemIngredient9.Id != null && r.ItemIngredient9.Name != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = new Item { Id = r.ItemIngredient9.Id.Value, Name = r.ItemIngredient9.Name } };
+            if (r.ItemIngredient0.ID != null) yield return new Ingredient { Amount = r.AmountIngredient0, Item = CreateItem(r.ItemIngredient0) };
+            if (r.ItemIngredient1.ID != null) yield return new Ingredient { Amount = r.AmountIngredient1, Item = CreateItem(r.ItemIngredient1) };
+            if (r.ItemIngredient2.ID != null) yield return new Ingredient { Amount = r.AmountIngredient2, Item = CreateItem(r.ItemIngredient2) };
+            if (r.ItemIngredient3.ID != null) yield return new Ingredient { Amount = r.AmountIngredient3, Item = CreateItem(r.ItemIngredient3) };
+            if (r.ItemIngredient4.ID != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = CreateItem(r.ItemIngredient4) };
+            if (r.ItemIngredient5.ID != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = CreateItem(r.ItemIngredient5) };
+            if (r.ItemIngredient6.ID != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = CreateItem(r.ItemIngredient6) };
+            if (r.ItemIngredient9.ID != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = CreateItem(r.ItemIngredient9) };
+            if (r.ItemIngredient7.ID != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = CreateItem(r.ItemIngredient7) };
+            if (r.ItemIngredient8.ID != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = CreateItem(r.ItemIngredient8) };
         }
+        private static Item CreateItem(XivApiItem xivItem)
+        {
 
+            var item = new Item
+            {
+                Id = xivItem.ID ?? 0,
+                Name_en = xivItem.Name_en ?? "",
+                Name_de = xivItem.Name_de ?? "",
+                Name_fr = xivItem.Name_fr ?? "",
+                Name_ja = xivItem.Name_ja ?? "",
+                ItemSearchCategory = xivItem.ItemSearchCategory != null ? createItemSearchCategory(xivItem.ItemSearchCategory) : null,
+                ItemUICategory = xivItem.ItemUICategory != null ? createItemUiCategory(xivItem.ItemUICategory) : new ItemUICategory(),
+                CanBeHq = xivItem.CanBeHq ?? false,
+            };
+
+            return item;
+        }
+        private static ItemSearchCategory createItemSearchCategory(XivApiItemSearchCategory tempSc) => new ItemSearchCategory
+        {
+            Id = tempSc.ID ?? 0,
+            Name_en = tempSc.Name_en ?? "",
+            Name_de = tempSc.Name_de ?? "",
+            Name_fr = tempSc.Name_fr ?? "",
+            Name_ja = tempSc.Name_ja ?? ""
+        };
+        private static ItemUICategory createItemUiCategory(XivApiItemUiCategory tempUc) => new ItemUICategory
+        {
+            Id = tempUc.ID.Value,
+            Name_en = tempUc.Name_en,
+            Name_de = tempUc.Name_de,
+            Name_fr = tempUc.Name_fr,
+            Name_ja = tempUc.Name_ja
+        };
         public string GetAllRecipies()
         {
             return "";
