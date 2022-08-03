@@ -136,7 +136,7 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
         var world = await dataCentreController.GetWorldFromName(worldName);
         if (item is null) return Results.NotFound("Item name gave no result");
         if (world is null) return Results.NotFound("Item name gave no result");
-        var result = await marketboardController.GetLatestUniversalisQueryForItem(item.Name, world.Name);
+        var result = await marketboardController.GetLatestUniversalisQueryForItem(item.Name_en, world.Name);
         if (result != null &&
         DateTime.Now.AddHours(-6) > result.LastUploadDate &&
         DateTime.Now.AddMinutes(-30) > result.QueryDate)

@@ -26,5 +26,7 @@ namespace XIVMarketBoard_Api.Data
         public DbSet<MbPost> Posts => Set<MbPost>();
         public DbSet<SaleHistory> SaleHistory => Set<SaleHistory>();
         public DbSet<UniversalisEntry> UniversalisEntries => Set<UniversalisEntry>();
+        public DbSet<ItemSearchCategory> ItemSearchCategory => Set<ItemSearchCategory>();
+        public DbSet<ItemUICategory> ItemUICategory => Set<ItemUICategory>();
     }
 }

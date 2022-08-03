@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using XIVMarketBoard_Api.Data;
 
@@ -10,9 +11,10 @@ using XIVMarketBoard_Api.Data;
 namespace XIVMarketBoard_Api.Migrations
 {
     [DbContext(typeof(XivDbContext))]
-    partial class XivDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220803175123_NewVariablesTranslationsSearchAndUiCategories")]
+    partial class NewVariablesTranslationsSearchAndUiCategories
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -176,8 +178,9 @@ namespace XIVMarketBoard_Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("DohDolJobIndex")
-                        .HasColumnType("int");
+                    b.Property<string>("DohDolJobIndex")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Name_de")
                         .IsRequired()

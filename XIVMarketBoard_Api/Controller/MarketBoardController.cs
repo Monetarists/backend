@@ -35,7 +35,7 @@ namespace XIVMarketBoard_Api.Controller
             .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Id == worldId && i.Item.Id == itemId);
         public async Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName) => await _xivContext.UniversalisEntries
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10)).Include(c => c.Item)
-            .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name == itemName);
+            .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name_en == itemName);
 
         /*public async Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName) => await _xivContext.UniversalisEntries
             .Include(a => a.Item).Include(a => a.Posts.Take(10)).Include(a => a.SaleHistory.Take(10))
@@ -49,7 +49,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 resultList.Add(await _xivContext.UniversalisEntries
                             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10)).Include(c => c.Item)
-                            .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name == itemName));
+                            .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name_en == itemName));
             }
             return resultList;
         }
@@ -58,6 +58,7 @@ namespace XIVMarketBoard_Api.Controller
 
         //TODO rename and use only for large datasets. Smaller datasets should probobly not load the entire database into memory 
         //and can just doublecheck with _xivContext.firstordefault per item
+        //TODO refactor to match xivapi's get or create and use states for checking if the query exists or if it is detached
         public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
         {
 
@@ -97,7 +98,7 @@ namespace XIVMarketBoard_Api.Controller
                 }
             }
             //Planetscale db errors when too many recipes are saved at once
-            for (var i = 0; resultList.Count > i; i += 100)
+            for (var i = 0; resultList.Count > i; i += 1000)
             {
                 var tempList = resultList.Skip(i).Take(1000).ToList();
                 _xivContext.AddRange(tempList);
