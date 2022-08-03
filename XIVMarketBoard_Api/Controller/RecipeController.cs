@@ -136,6 +136,7 @@ namespace XIVMarketBoard_Api.Controller
             foreach (var ingredient in inputList)
             {
                 ingredient.Item = setItemVariables(ingredient.Item);
+                returnList.Add(ingredient);
 
             }
             return returnList;
