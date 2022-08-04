@@ -40,9 +40,13 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world)
         {
-            var results = _xivContext.UniversalisEntries.Where(x => itemList.Contains(x.Item) && x.World == world).OrderByDescending(x => x.QueryDate);
-            var distinctResults = await results.GroupBy(x => x.Item.Id).Select(x => x.First()).ToListAsync();
-            return distinctResults;
+            var results = from itemId in _xivContext.UniversalisEntries.Where(i => itemList.Contains(i.Item)).Select(x => x.Item.Id).Distinct()
+                          from universalisEntry in _xivContext.UniversalisEntries
+                          .Where(x => x.Item.Id == itemId)
+                          .OrderByDescending(e => e.QueryDate)
+                          .Take(1)
+                          select universalisEntry;
+            return await results.ToListAsync();
         }
 
 
