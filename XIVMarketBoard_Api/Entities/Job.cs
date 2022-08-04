@@ -10,7 +10,7 @@ namespace XIVMarketBoard_Api.Entities
         public string Name_ja { get; set; } = "";
         public string Name_de { get; set; } = "";
         public string Abbreviation { get; set; } = "";
-        public string ClassJobCategoryTargetID { get; set; } = "";
+        public int? ClassJobCategoryTargetID { get; set; }
         public int? DohDolJobIndex { get; set; }
 
 

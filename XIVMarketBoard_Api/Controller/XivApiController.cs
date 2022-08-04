@@ -121,7 +121,18 @@ namespace XIVMarketBoard_Api.Controller
             resultList.Select(r => new Recipe
             {
                 Ingredients = CreateIngredientList(r).ToList(),
-                job = new Job { Id = r.ClassJob.Id, Name_en = r.ClassJob.Name_en },
+                job = new Job
+                {
+                    Id = r.ClassJob.Id,
+                    Name_en = r.ClassJob.Name_en,
+                    Name_fr = r.ClassJob.Name_fr,
+                    Name_de = r.ClassJob.Name_de,
+                    Name_ja = r.ClassJob.Name_ja,
+                    Abbreviation = r.ClassJob.Abbreviation,
+                    DohDolJobIndex = r.ClassJob.DohDolJobIndex,
+                    ClassJobCategoryTargetID = r.ClassJob.ClassJobCategoryTargetID
+
+                },
                 Id = r.Id,
                 Name_en = r.Name_en,
                 Name_de = r.Name_de,
