@@ -19,6 +19,7 @@ namespace XIVMarketBoard_Api.Controller
 
         Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
         Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
+        Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world);
     }
 
     public class MarketBoardController : IMarketBoardController
@@ -41,6 +42,16 @@ namespace XIVMarketBoard_Api.Controller
             .Include(a => a.Item).Include(a => a.Posts.Take(10)).Include(a => a.SaleHistory.Take(10))
             .OrderByDescending(p => p.QueryDate)
             .Where(i => i.World.Name == worldName && itemNames.Contains(i.Item.Name)).ToListAsync();*/
+        public async Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world)
+        {
+            List<UniversalisEntry> result = new List<UniversalisEntry>();
+            foreach (var item in itemList)
+            {
+                var entry = await _xivContext.UniversalisEntries.Include(x => x.Item).Where(x => x.Item.Id == item.Id && x.World == world).FirstOrDefaultAsync();
+                if (entry != null) result.Add(entry);
+            }
+            return result;
+        }
 
         public async Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName)
         {

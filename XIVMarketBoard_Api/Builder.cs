@@ -9,7 +9,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using AutoMapper;
 using XIVMarketBoard_Api.Helpers;
+using XIVMarketBoard_Api.Tools;
 using XIVMarketBoard_Api.Authorization;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace XIVMarketBoard_Api
 {
@@ -49,8 +52,9 @@ namespace XIVMarketBoard_Api
                 c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement { { securityScheme, new string[] { } } });
             });
-
+            services.AddControllers().AddNewtonsoftJson(o => { o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; });
             services.AddAutoMapper(typeof(MapperProfile));
+            services.AddTransient<ICalculateCraftingCost, CalculateCraftingCost>();
             services.AddTransient<IUniversalisApiController, UniversalisApiController>();
             services.AddTransient<IXivApiController, XivApiController>();
             services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
@@ -97,6 +101,7 @@ namespace XIVMarketBoard_Api
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwagger();
+
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
             app.UseCors();
             app.UseMiddleware<ErrorHandlerMiddleware>();
