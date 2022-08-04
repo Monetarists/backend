@@ -43,10 +43,7 @@ namespace XIVMarketBoard_Api.Controller
             var results = from itemId in _xivContext.UniversalisEntries.Where(i => itemList.Contains(i.Item)).Select(x => x.Item.Id).Distinct()
                           from universalisEntry in _xivContext.UniversalisEntries
                           .Where(x => x.Item.Id == itemId)
-<<<<<<< HEAD
                           .Include(x => x.Item)
-=======
->>>>>>> 3cb10b3cea9fcc060f57f356de7ddb1e49ea8081
                           .OrderByDescending(e => e.QueryDate)
                           .Take(1)
                           select universalisEntry;
