@@ -226,9 +226,6 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
     try
     {
         var outdatedList = new List<Item>();
-        //var resultList = new List<UniversalisEntry>();
-        //var responseList = new List<UniversalisEntry>();
-
         var itemNames = itemString.Split(",").ToList();
         var items = await recipeController.GetItemFromNameList(itemNames);
         var world = await dataCentreController.GetWorldFromName(worldName);
