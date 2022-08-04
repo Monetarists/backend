@@ -6,7 +6,7 @@ namespace XIVMarketBoard_Api.Listeners
 {
     public class SaveMarketBoardDataListener : IListener<SaveMarketBoardDataRequest>
     {
-        private IMarketBoardController _marketBoardController;
+        private readonly IMarketBoardController _marketBoardController;
 
         public SaveMarketBoardDataListener(IMarketBoardController marketBoardController)
         {
@@ -15,7 +15,7 @@ namespace XIVMarketBoard_Api.Listeners
 
         public async Task HandleAsync(SaveMarketBoardDataRequest e)
         {
-            var resultList = await _marketBoardController.GetOrCreateUniversalisQueries(e.UniversalisEntries);
+            await _marketBoardController.GetOrCreateUniversalisQueries(e.UniversalisEntries);
         }
     }
 }

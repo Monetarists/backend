@@ -20,7 +20,6 @@ namespace XIVMarketBoard_Api.Controller
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
         Task<string> ImportMarketableItems();
         Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings);
-        Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorldQueueSave(List<Item> itemList, World world, int entries, int listings);
     }
 
     public class UniversalisApiController : IUniversalisApiController
@@ -85,56 +84,22 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
                 }
-                var test = await response.Content.ReadAsStringAsync();
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                 if (parsedResult.items.Count() == 0)
                 {
-                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                     parsedResult.items = new List<UniversalisResponseItems>() { item };
                 }
-                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new ArgumentNullException("item is null"))));
+                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new Exception("item is null"))));
                 //wait for api ratelimiting
                 await Task.Delay(80);
 
             }
 
             var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
-            return uniList;
+            return resultList;
         }
-        public async Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorldQueueSave(List<Item> itemList, World world, int entries, int listings)
-        {
-            List<UniversalisEntry> uniList = new List<UniversalisEntry>();
-            //TODO fix an get marketable items only
 
-            for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
-            {
-
-                var itemColl = itemList.Skip(amount).Take(calloutSize);
-                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
-                }
-                var test = await response.Content.ReadAsStringAsync();
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
-                if (parsedResult.items.Count() == 0)
-                {
-                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
-                    parsedResult.items = new List<UniversalisResponseItems>() { item };
-                }
-                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new ArgumentNullException("item is null"))));
-                //wait for api ratelimiting
-                await Task.Delay(80);
-
-            }
-            var a = uniList.Where(x => x.Item == null);
-            var evt = new SaveMarketBoardDataRequest { UniversalisEntries = uniList.ToList() };
-            //TODO add queue 
-            _queue.QueueBroadcast(evt);
-            //var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
-            //TODO return uniList instead of resultList
-            return uniList;
-        }
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
             var uniList = new List<UniversalisEntry>();

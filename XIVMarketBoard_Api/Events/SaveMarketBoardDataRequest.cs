@@ -4,6 +4,6 @@ namespace XIVMarketBoard_Api.Events
 {
     public class SaveMarketBoardDataRequest : IEvent
     {
-        public List<UniversalisEntry> UniversalisEntries { get; set; }
+        public List<UniversalisEntry> UniversalisEntries { get; set; } = new List<UniversalisEntry>();
     }
 }

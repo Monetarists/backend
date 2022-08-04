@@ -53,7 +53,6 @@ app.MapGet("/items", async (IRecipeController recipeController, IMapper mapper) 
     if (result.Count > 0)
     {
         apiResponse.Items = mapper.Map(result, new List<ResponseItem>());
-        //apiResponse.Items = result;
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
@@ -104,7 +103,7 @@ app.MapGet("/craftingcost/recipe/{worldName}/{recipeId}", async (IDataCentreCont
     var recipe = await recipeController.GetRecipesByIds(new List<int> { recipeId }).FirstOrDefaultAsync();
     var itemList = recipe.Ingredients.Select(x => x.Item).ToList();
     itemList.Add(recipe.Item);
-    if (world == null || itemList.Count() == 0)
+    if (world == null || !itemList.Any())
     {
         apiResponse.message = "Not Found";
         return Results.NotFound(apiResponse);
@@ -127,7 +126,7 @@ app.MapGet("/craftingcost/job/{worldName}/{jobAbr}", async (IDataCentreControlle
     var itemList = recipeList.SelectMany(x => x.Ingredients.Select(x => x.Item)).ToList();
     itemList.AddRange(recipeList.Select(x => x.Item).ToList());
     itemList = itemList.DistinctBy(x => x.Id).ToList();
-    if (world == null || itemList.Count() == 0)
+    if (world == null || !itemList.Any())
     {
         apiResponse.message = "Not Found";
         return Results.NotFound(apiResponse);
@@ -259,14 +258,14 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
 .WithName("get marketboard entries for list of items names");
 
 app.MapPut("/import/marketboard", async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, IRecipeController recipeController, IMapper mapper,
-    int itemId, string worldName, int nrOfEntries, int nrOfListings) =>
+    int itemId, string worldName) =>
 {
     var world = await dataCentreController.GetWorldFromName(worldName);
     var item = await recipeController.GetItemFromId(itemId);
 
     if (world != null && item != null)
     {
-        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, nrOfEntries, nrOfListings);
+        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, 5, 5);
 
         if (result != null)
         {
