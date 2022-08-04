@@ -13,6 +13,11 @@ using XIVMarketBoard_Api.Tools;
 using XIVMarketBoard_Api.Authorization;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using Coravel.Queuing.Interfaces;
+using Coravel.Queuing;
+using Coravel;
+using XIVMarketBoard_Api.Events;
+using XIVMarketBoard_Api.Listeners;
 
 namespace XIVMarketBoard_Api
 {
@@ -52,8 +57,11 @@ namespace XIVMarketBoard_Api
                 c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement { { securityScheme, new string[] { } } });
             });
+            services.AddQueue();
+            services.AddEvents();
             services.AddControllers().AddNewtonsoftJson(o => { o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; });
             services.AddAutoMapper(typeof(MapperProfile));
+            services.AddTransient<SaveMarketBoardDataListener>();
             services.AddTransient<ICalculateCraftingCost, CalculateCraftingCost>();
             services.AddTransient<IUniversalisApiController, UniversalisApiController>();
             services.AddTransient<IXivApiController, XivApiController>();
@@ -114,6 +122,8 @@ namespace XIVMarketBoard_Api
                 app.UseDeveloperExceptionPage();
                 app.UseHttpsRedirection();
             }
+            var events = app.Services.ConfigureEvents();
+            events.Register<SaveMarketBoardDataRequest>().Subscribe<SaveMarketBoardDataListener>();
             return app;
         }
 

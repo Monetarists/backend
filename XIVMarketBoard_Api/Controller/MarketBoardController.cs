@@ -38,21 +38,33 @@ namespace XIVMarketBoard_Api.Controller
             .Include(a => a.Posts.Take(10)).Include(b => b.SaleHistory.Take(10)).Include(c => c.Item)
             .OrderByDescending(p => p.QueryDate).FirstOrDefaultAsync(i => i.World.Name == worldName && i.Item.Name_en == itemName);
 
-        /*public async Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName) => await _xivContext.UniversalisEntries
-            .Include(a => a.Item).Include(a => a.Posts.Take(10)).Include(a => a.SaleHistory.Take(10))
-            .OrderByDescending(p => p.QueryDate)
-            .Where(i => i.World.Name == worldName && itemNames.Contains(i.Item.Name)).ToListAsync();*/
-        public async Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world)
+        /*public async Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world)
         {
             List<UniversalisEntry> result = new List<UniversalisEntry>();
             foreach (var item in itemList)
             {
-                var entry = await _xivContext.UniversalisEntries.Include(x => x.Item).Where(x => x.Item.Id == item.Id && x.World == world).FirstOrDefaultAsync();
+                var entry = await _xivContext.UniversalisEntries.Include(x => x.Item).OrderByDescending(x => x.QueryDate).Where(x => x.Item.Id == item.Id && x.World == world).FirstOrDefaultAsync();
                 if (entry != null) result.Add(entry);
             }
             return result;
+        }*/
+        public async Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world)
+        {
+            var results = _xivContext.UniversalisEntries.Where(x => itemList.Contains(x.Item) && x.World == world).OrderByDescending(x => x.QueryDate);
+            var distinctResults = results.GroupBy(x => x.Item.Id).Select(x => x.First()).ToList();
+            return distinctResults;
         }
 
+        /*
+        var v = await context.Projects
+          .Where(p => some.Contains(p.ProjectId))
+          .Select(p => p.Photos
+              .OrderByDescending(ph => ph.Uploaded)
+              .ThenBy(ph => ph.Gallery)
+              .First()
+          ).ToListAsync(); 
+
+         */
         public async Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName)
         {
             var resultList = new List<UniversalisEntry?>();
@@ -66,10 +78,6 @@ namespace XIVMarketBoard_Api.Controller
         }
 
 
-
-        //TODO rename and use only for large datasets. Smaller datasets should probobly not load the entire database into memory 
-        //and can just doublecheck with _xivContext.firstordefault per item
-        //TODO refactor to match xivapi's get or create and use states for checking if the query exists or if it is detached
         public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
         {
 
@@ -80,9 +88,15 @@ namespace XIVMarketBoard_Api.Controller
             var returnList = new List<UniversalisEntry>();
 
             var resultList = new List<UniversalisEntry>();
+            var a = qList.Where(x => x.Item == null);
+            var b = a.Count();
+            var c = qList.Count();
             foreach (var q in qList)
             {
-
+                if (q.Item == null)
+                {
+                    int i = 0;
+                }
                 var universlisEntry = currentEntries.FirstOrDefault(r =>
                         r.Item.Id == q.Item.Id &&
                         r.World.Id == q.World.Id &&
