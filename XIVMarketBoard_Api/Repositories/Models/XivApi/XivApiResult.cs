@@ -9,7 +9,7 @@
         public string Name_ja;
         public int IconID;
         public int IsExpert;
-        public int IsSpecializationRequired { get; set; }
+        public int IsSpecializationRequired;
         public XivApiClassJob ClassJob = new XivApiClassJob();
         public XivApiItem ItemResult = new XivApiItem();
         public int AmountResult;

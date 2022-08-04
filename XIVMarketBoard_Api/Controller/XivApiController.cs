@@ -37,17 +37,16 @@ namespace XIVMarketBoard_Api.Controller
             }
 
             var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
-            if (responseResult == null) { throw new ArgumentNullException("JsonConvert returned null object"); }
+            if (responseResult == null) { throw new ArgumentNullException(nameof(responseResult), "JsonConvert returned null object"); }
             foreach (var server in responseResult.Results)
             {
                 if (server.Name_en != "")
                 {
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
-                    var resp = await responseWd.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
                     if (apiResponse == null)
                     {
-                        throw new ArgumentNullException("JsonConvert returned null object");
+                        throw new JsonException("JsonConvert returned null object");
                     }
                     if (apiResponse.InGame && apiResponse.Name_en != "")
                     {
@@ -90,7 +89,7 @@ namespace XIVMarketBoard_Api.Controller
                 var httpResponse = await _xivApiRepository.GetRecipesAsync(i, amount);
                 if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    throw new Exception("error" + httpResponse.StatusCode);
+                    throw new ArgumentException("xivApi responded with " + httpResponse.StatusCode);
                 }
                 contentString = await httpResponse.Content.ReadAsStringAsync();
 
@@ -140,15 +139,15 @@ namespace XIVMarketBoard_Api.Controller
                 Name_ja = r.Name_ja,
                 Item = new Item
                 {
-                    Id = r.ItemResult.ID.Value,
-                    Name_en = r.ItemResult.Name_en,
-                    Name_de = r.ItemResult.Name_de,
-                    Name_fr = r.ItemResult.Name_fr,
-                    Name_ja = r.ItemResult.Name_ja,
+                    Id = r.ItemResult.ID ?? 0,
+                    Name_en = r.ItemResult.Name_en ?? "",
+                    Name_de = r.ItemResult.Name_de ?? "",
+                    Name_fr = r.ItemResult.Name_fr ?? "",
+                    Name_ja = r.ItemResult.Name_ja ?? "",
 
                     ItemSearchCategory = r.ItemResult.ItemSearchCategory != null ? createItemSearchCategory(r.ItemResult.ItemSearchCategory) : null,
-                    ItemUICategory = createItemUiCategory(r.ItemResult.ItemUICategory),
-                    CanBeHq = r.ItemResult.CanBeHq.Value,
+                    ItemUICategory = createItemUiCategory(r.ItemResult.ItemUICategory) ?? new ItemUICategory(),
+                    CanBeHq = r.ItemResult.CanBeHq ?? false,
                 },
                 AmountResult = r.AmountResult
             });
@@ -194,11 +193,11 @@ namespace XIVMarketBoard_Api.Controller
         };
         private static ItemUICategory createItemUiCategory(XivApiItemUiCategory tempUc) => new ItemUICategory
         {
-            Id = tempUc.ID.Value,
-            Name_en = tempUc.Name_en,
-            Name_de = tempUc.Name_de,
-            Name_fr = tempUc.Name_fr,
-            Name_ja = tempUc.Name_ja
+            Id = tempUc.ID ?? 0,
+            Name_en = tempUc.Name_en ?? "",
+            Name_de = tempUc.Name_de ?? "",
+            Name_fr = tempUc.Name_fr ?? "",
+            Name_ja = tempUc.Name_ja ?? ""
         };
         public string GetAllRecipies()
         {

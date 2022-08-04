@@ -3,8 +3,9 @@ using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models.Universalis;
-
+using XIVMarketBoard_Api.Events;
 using System;
+using Coravel.Queuing.Interfaces;
 
 namespace XIVMarketBoard_Api.Controller
 {
@@ -27,12 +28,14 @@ namespace XIVMarketBoard_Api.Controller
         private readonly IMarketBoardController _marketBoardApiController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
         private readonly IRecipeController _recipeController;
+        private readonly IQueue _queue;
 
-        public UniversalisApiController(IMarketBoardController dbController, IUniversalisApiRepository universalisApiRepositiory, IRecipeController recipeController)
+        public UniversalisApiController(IMarketBoardController dbController, IUniversalisApiRepository universalisApiRepositiory, IRecipeController recipeController, IQueue queue)
         {
             _marketBoardApiController = dbController;
             _universalisApiRepository = universalisApiRepositiory;
             _recipeController = recipeController;
+            _queue = queue;
         }
 
 
@@ -81,26 +84,25 @@ namespace XIVMarketBoard_Api.Controller
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
                 }
-                var test = await response.Content.ReadAsStringAsync();
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                 if (parsedResult.items.Count() == 0)
                 {
-                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                    var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                     parsedResult.items = new List<UniversalisResponseItems>() { item };
                 }
-                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new ArgumentNullException("item is null"))));
+                uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new Exception("item is null"))));
                 //wait for api ratelimiting
                 await Task.Delay(80);
 
             }
-            var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
 
+            var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
             return resultList;
         }
+
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
             var uniList = new List<UniversalisEntry>();
-            //TODO fix an get marketable items only
             var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => (bool)r.IsMarketable).ToList();
             var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world, 5, 5);
             return "Imported all items on world " + world.Name;

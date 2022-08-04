@@ -1,9 +1,14 @@
 using XIVMarketBoard_Api.Controller;
 using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api;
+using XIVMarketBoard_Api.Tools;
 using XIVMarketBoard_Api.Entities;
 using XIVMarketBoard_Api.Repositories.Models.Users;
+
 using Microsoft.AspNetCore.Authorization;
+using XIVMarketBoard_Api.Repositories.Models.ResponseDto;
+using System.Linq;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = Builder.ConfigureServices(builder);
@@ -22,7 +27,7 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
     return Results.NotFound(response);
 }).WithName("Authenticate user");
 
-/*app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
+app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
 {
     string error;
     RegisterRequest req = new RegisterRequest() { UserName = username, Password = password };
@@ -31,71 +36,121 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
         userController.Register(req);
         return Results.Ok("Registration successful");
     }
-    catch(Exception e)
+    catch (Exception e)
     {
         error = e.Message;
     }
     return Results.BadRequest(error);
 
-}).WithName("Register user");*/
+}).WithName("Register user");
 
 
-app.MapGet("/items", async (IRecipeController recipeController) =>
+app.MapGet("/items", async (IRecipeController recipeController, IMapper mapper) =>
 {
-    ResponseDto apiResponse = new ResponseDto();
+    ResponseResult apiResponse = new ResponseResult();
     var result = await recipeController.GetAllItems().ToListAsync();
 
     if (result.Count > 0)
     {
-        apiResponse.Items = result;
+        apiResponse.Items = mapper.Map(result, new List<ResponseItem>());
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
 
-    apiResponse.message = ResponseDto.noItemsMessage;
+    apiResponse.message = ResponseResult.noItemsMessage;
     return Results.NotFound(apiResponse);
 })
 .WithName("get all items from db");
 
-app.MapGet("/item/{itemId}", async (IRecipeController recipeController, int itemId) =>
+app.MapGet("/item/{itemId}", async (IRecipeController recipeController, IMapper mapper, int itemId) =>
 {
     var result = await recipeController.GetItemFromId(itemId);
-    ResponseDto apiResponse = new ResponseDto();
+    ResponseResult apiResponse = new ResponseResult();
 
     if (result != null)
     {
-        //remove take10
-        apiResponse.Items = new List<Item> { result };
+
+        apiResponse.Items = new List<ResponseItem> { mapper.Map(result, new ResponseItem()) };
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
-    apiResponse.message = ResponseDto.noItemsMessage;
+    apiResponse.message = ResponseResult.noItemsMessage;
     return Results.NotFound(apiResponse);
 })
 .WithName("get info for a specific item");
 
-app.MapGet("/recipes", async (IRecipeController recipeController) =>
+app.MapGet("/recipes", async (IRecipeController recipeController, IMapper mapper) =>
 {
     var result = await recipeController.GetAllRecipesList();
-    ResponseDto apiResponse = new ResponseDto();
+    ResponseResult apiResponse = new ResponseResult();
 
-    if (result.Count > 0)
+    if (result.Any())
     {
-        apiResponse.Recipes = result;
+        apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
+
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
-    apiResponse.message = ResponseDto.noItemsMessage;
+    apiResponse.message = ResponseResult.noItemsMessage;
     return Results.NotFound(apiResponse);
 })
 .WithName("get all recipes from db");
 
-app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, int? itemId, string? recipeName) =>
+app.MapGet("/craftingcost/recipe/{worldName}/{recipeId}", async (IDataCentreController dataCentreController, IRecipeController recipeController, ICalculateCraftingCost calculateCraftingCost, IMapper mapper, string worldName, int recipeId) =>
+{
+    ResponseResult apiResponse = new ResponseResult();
+    var world = await dataCentreController.GetWorldFromName(worldName);
+    var recipe = await recipeController.GetRecipesByIds(new List<int> { recipeId }).FirstOrDefaultAsync();
+    if (recipe is null)
+    {
+        return Results.NotFound("recipe not found");
+    }
+    var itemList = recipe.Ingredients.Select(x => x.Item).ToList();
+    itemList.Add(recipe.Item);
+    if (world == null || !itemList.Any())
+    {
+        apiResponse.message = "Not Found";
+        return Results.NotFound(apiResponse);
+    }
+
+    var result = new ResponseResult();
+    result.CraftingCosts = new List<ResponseCraftingCostDto>();
+    result.CraftingCosts = await calculateCraftingCost.GetCraftingCostRecipes(world, new List<Recipe> { recipe }, itemList);
+    apiResponse.message = "ok";
+
+    return Results.Ok(result);
+
+})
+.WithName("get crafting cost for recipe");
+app.MapGet("/craftingcost/job/{worldName}/{jobAbr}", async (IDataCentreController dataCentreController, IRecipeController recipeController, ICalculateCraftingCost calculateCraftingCost, string worldName, string jobAbr) =>
+{
+    ResponseResult apiResponse = new ResponseResult();
+    var world = await dataCentreController.GetWorldFromName(worldName);
+    var recipeList = await recipeController.GetMarketableRecipesByJob(jobAbr).ToListAsync();
+    var itemList = recipeList.SelectMany(x => x.Ingredients.Select(x => x.Item)).ToList();
+    itemList.AddRange(recipeList.Select(x => x.Item).ToList());
+    itemList = itemList.DistinctBy(x => x.Id).ToList();
+    if (world == null || !itemList.Any())
+    {
+        apiResponse.message = "Not Found";
+        return Results.NotFound(apiResponse);
+    }
+
+    var result = new ResponseResult();
+    result.CraftingCosts = await calculateCraftingCost.GetCraftingCostRecipes(world, recipeList, itemList);
+    apiResponse.message = "ok";
+
+    return Results.Ok(result);
+
+})
+.WithName("get crafting cost for job");
+
+app.MapGet("/recipe", async (IRecipeController recipeController, IMapper mapper, int? recipeId, int? itemId, string? recipeName) =>
 {
     var result = new List<Recipe>();
     if (recipeId == null && itemId == null && recipeName == null)
     {
-        return Results.BadRequest("Endpoint requires one of the following parameters: int? recipeId, int? itemId, string? recipeName");
+        return Results.BadRequest("Endpoint requires one of the following parameters: int recipeId, int itemId, string recipeName");
     }
     if (recipeId != null)
     {
@@ -109,12 +164,12 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
     {
         result = await recipeController.GetRecipesFromNameCollIncludeIngredients(new List<string> { recipeName }).ToListAsync();
     }
-    ResponseDto apiResponse = new ResponseDto();
+    ResponseResult apiResponse = new ResponseResult();
 
     if (result.Count > 0)
     {
-        //remove take10
-        apiResponse.Recipes = result;
+
+        apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
@@ -125,27 +180,36 @@ app.MapGet("/recipe", async (IRecipeController recipeController, int? recipeId, 
 
 app.MapGet("/marketboard/{worldName}/{itemName}", async (
     IDataCentreController dataCentreController, IRecipeController recipeController,
-    IUniversalisApiController universalisController, IMarketBoardController marketboardController,
-    string itemName, string worldName) =>
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController, IMapper mapper,
+    string worldName, string itemName) =>
 {
     try
     {
         var item = await recipeController.GetItemFromNameAsync(itemName);
         var world = await dataCentreController.GetWorldFromName(worldName);
         if (item is null) return Results.NotFound("Item name gave no result");
-        if (world is null) return Results.NotFound("Item name gave no result");
+        if (world is null) return Results.NotFound("World name gave no result");
         var result = await marketboardController.GetLatestUniversalisQueryForItem(item.Name_en, world.Name);
         if (result != null &&
         DateTime.Now.AddHours(-6) > result.LastUploadDate &&
-        DateTime.Now.AddMinutes(-30) > result.QueryDate)
+        DateTime.Now.AddHours(-1) > result.QueryDate)
         {
             var updatedEntry = await universalisController.ImportUniversalisDataForItemAndWorld(item, world, 5, 5);
             if (updatedEntry is null) return Results.NotFound("Universalis returned no entries for item");
 
-            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry> { updatedEntry } });
+            var responseResult = new ResponseResult();
+            responseResult.UniversalisEntry = new List<ResponseUniversalisEntry> { mapper.Map(updatedEntry, new ResponseUniversalisEntry()) };
+            responseResult.message = "ok";
+            return Results.Ok(responseResult);
         }
 
-        if (result != null) { return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry> { result } }); }
+        if (result != null)
+        {
+            var responseResult = new ResponseResult();
+            responseResult.UniversalisEntry = new List<ResponseUniversalisEntry> { mapper.Map(result, new ResponseUniversalisEntry()) };
+            responseResult.message = "ok";
+            return Results.Ok(responseResult);
+        }
 
         return Results.NotFound("No marketboard entries found");
     }
@@ -157,24 +221,17 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
 .WithName("get marketboard entries for item");
 
 app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreController, IRecipeController recipeController,
-    IUniversalisApiController universalisController, IMarketBoardController marketboardController, string itemString, string worldName) =>
+    IUniversalisApiController universalisController, IMarketBoardController marketboardController, IMapper mapper, string itemString, string worldName) =>
 {
     try
     {
         var outdatedList = new List<Item>();
-        //var resultList = new List<UniversalisEntry>();
-        //var responseList = new List<UniversalisEntry>();
-
         var itemNames = itemString.Split(",").ToList();
         var items = await recipeController.GetItemFromNameList(itemNames);
         var world = await dataCentreController.GetWorldFromName(worldName);
 
         if (items.Count == 0 || world is null) return Results.NotFound("items or world not found");
-        //items.ForEach(async i => resultList.Add(
-        //   await marketboardController.GetLatestUniversalisQueryForItem(i.Id, world.Id) ??
-        //   throw new ArgumentNullException("Null was returned from context")));
-        var resultList = await marketboardController.GetLatestUniversalisQueryForItems(itemNames, worldName);
-        //var resultList = await marketboardController.GetLatestUniversalisQueryForItems(items.Select(a => a.Name), worldName);
+        var resultList = await marketboardController.GetLatestUniversalisQueryForItems(itemNames.Take(10), worldName);
         foreach (var entry in resultList)
         {
             if (DateTime.Now.AddHours(-6) > entry.LastUploadDate && DateTime.Now.AddMinutes(-30) > entry.QueryDate)
@@ -187,7 +244,10 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
         if (outdatedList.Count > 0) { responseList.AddRange(await universalisController.ImportUniversalisDataForItemListAndWorld(outdatedList, world, 5, 5)); }
         if (responseList.Count() > 0)
         {
-            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = responseList });
+            var responseResult = new ResponseResult();
+            responseResult.UniversalisEntry = mapper.Map(responseList, new List<ResponseUniversalisEntry>());
+            responseResult.message = "ok";
+            return Results.Ok(responseResult);
         }
         return Results.NotFound("No marketboard entries found");
     }
@@ -198,27 +258,29 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
 })
 .WithName("get marketboard entries for list of items names");
 
-app.MapPut("/import/marketboard", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, IRecipeController recipeController,
-    int itemId, string worldName, int nrOfEntries, int nrOfListings) =>
+app.MapPut("/import/marketboard", async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, IRecipeController recipeController, IMapper mapper,
+    int itemId, string worldName) =>
 {
     var world = await dataCentreController.GetWorldFromName(worldName);
     var item = await recipeController.GetItemFromId(itemId);
 
     if (world != null && item != null)
     {
-        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, nrOfEntries, nrOfListings);
+        var result = await universalisApiController.ImportUniversalisDataForItemAndWorld(item, world, 5, 5);
 
         if (result != null)
         {
-
-            return Results.Ok(new ResponseDto() { message = "ok", UniversalisEntry = new List<UniversalisEntry>() { result } });
+            var responseResult = new ResponseResult();
+            responseResult.UniversalisEntry = new List<ResponseUniversalisEntry> { mapper.Map(result, new ResponseUniversalisEntry()) };
+            responseResult.message = "ok";
+            return Results.Ok(responseResult);
         }
     }
     return Results.NotFound("World or Item not found");
 })
 .WithName("import item entry");
 
-app.MapPut("/import/marketboard/{worldName}", [Authorize] async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, string worldName) =>
+app.MapPut("/import/marketboard/{worldName}", async (IUniversalisApiController universalisApiController, IDataCentreController dataCentreController, string worldName) =>
 {
     var world = await dataCentreController.GetWorldFromName(worldName);
 
@@ -238,7 +300,7 @@ app.MapPut("/import/marketboard/{worldName}", [Authorize] async (IUniversalisApi
 })
 .WithName("import items for world");
 
-app.MapPut("/import/worlds", [Authorize] async (IXivApiController xivApiController) =>
+app.MapPut("/import/worlds", async (IXivApiController xivApiController) =>
 {
     try
     {
@@ -253,7 +315,7 @@ app.MapPut("/import/worlds", [Authorize] async (IXivApiController xivApiControll
 })
 .WithName("import worlds");
 
-app.MapPut("/import/recipes", [Authorize] async (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
+app.MapPut("/import/recipes", async (IXivApiController xivApiController, IUniversalisApiController universalisApiController) =>
 {
     try
     {
