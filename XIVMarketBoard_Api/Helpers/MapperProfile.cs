@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using XIVMarketBoard_Api.Entities;
 using XIVMarketBoard_Api.Repositories.Models.Users;
+using XIVMarketBoard_Api.Repositories.Models.ResponseDto;
+
 namespace XIVMarketBoard_Api.Helpers
 {
 
@@ -13,7 +15,20 @@ namespace XIVMarketBoard_Api.Helpers
             CreateMap<User, AuthenticateResponse>();
 
             // RegisterRequest -> User
-            CreateMap<RegisterRequest, User>();
+            CreateMap<Ingredient, ResponseIngredient>();
+
+            CreateMap<Item, ResponseItem>();
+
+            CreateMap<Job, ResponseJob>();
+
+            CreateMap<Recipe, ResponseRecipe>();
+
+            CreateMap<UniversalisEntry, ResponseUniversalisEntry>();
+
+            CreateMap<SaleHistory, ResponseUniversalisHistory>();
+
+            CreateMap<MbPost, ResponseUniversalisPost>();
+
 
             // UpdateRequest -> User
             CreateMap<UpdateRequest, User>()
