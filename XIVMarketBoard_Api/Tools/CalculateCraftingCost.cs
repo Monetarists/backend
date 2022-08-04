@@ -60,16 +60,13 @@ namespace XIVMarketBoard_Api.Tools
         public ResponseCraftingCostDto MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe)
         {
             var returnResult = new ResponseCraftingCostDto();
-            _mapper.Map(universalisEntries.Where(x => x.Item.Id == recipe.Item.Id).First(), returnResult.UniversalisEntry);
+            _mapper.Map(universalisEntries.First(x => x.Item.Id == recipe.Item.Id), returnResult.UniversalisEntry);
             returnResult.UniversalisEntry.Item = null;
             returnResult.UniversalisEntry.Posts = null;
             returnResult.UniversalisEntry.SaleHistory = null;
 
             returnResult.RecipeId = recipe.Id;
-            if (universalisEntries
-                .Where(x => x.Item.Id != recipe.Item.Id &&
-                x.MinPrice == 0)
-                .Any())
+            if (universalisEntries.Any(x => x.Item.Id != recipe.Item.Id && x.MinPrice == 0))
             {
                 returnResult.message = "Recipe contains one or more ingredients with minprice = 0";
                 returnResult.CraftingCost = 0;

@@ -84,7 +84,7 @@ app.MapGet("/recipes", async (IRecipeController recipeController, IMapper mapper
     var result = await recipeController.GetAllRecipesList();
     ResponseResult apiResponse = new ResponseResult();
 
-    if (result.Count() > 0)
+    if (result.Any())
     {
         apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
 
@@ -101,6 +101,10 @@ app.MapGet("/craftingcost/recipe/{worldName}/{recipeId}", async (IDataCentreCont
     ResponseResult apiResponse = new ResponseResult();
     var world = await dataCentreController.GetWorldFromName(worldName);
     var recipe = await recipeController.GetRecipesByIds(new List<int> { recipeId }).FirstOrDefaultAsync();
+    if (recipe is null)
+    {
+        return Results.NotFound("recipe not found");
+    }
     var itemList = recipe.Ingredients.Select(x => x.Item).ToList();
     itemList.Add(recipe.Item);
     if (world == null || !itemList.Any())

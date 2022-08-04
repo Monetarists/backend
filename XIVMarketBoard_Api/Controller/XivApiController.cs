@@ -37,17 +37,16 @@ namespace XIVMarketBoard_Api.Controller
             }
 
             var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
-            if (responseResult == null) { throw new ArgumentNullException("JsonConvert returned null object"); }
+            if (responseResult == null) { throw new ArgumentNullException(nameof(responseResult), "JsonConvert returned null object"); }
             foreach (var server in responseResult.Results)
             {
                 if (server.Name_en != "")
                 {
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
-                    var resp = await responseWd.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
                     if (apiResponse == null)
                     {
-                        throw new ArgumentNullException("JsonConvert returned null object");
+                        throw new JsonException("JsonConvert returned null object");
                     }
                     if (apiResponse.InGame && apiResponse.Name_en != "")
                     {
@@ -90,7 +89,7 @@ namespace XIVMarketBoard_Api.Controller
                 var httpResponse = await _xivApiRepository.GetRecipesAsync(i, amount);
                 if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    throw new Exception("error" + httpResponse.StatusCode);
+                    throw new ArgumentException("xivApi responded with " + httpResponse.StatusCode);
                 }
                 contentString = await httpResponse.Content.ReadAsStringAsync();
 
