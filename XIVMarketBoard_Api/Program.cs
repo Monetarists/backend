@@ -88,6 +88,7 @@ app.MapGet("/recipes", async (IRecipeController recipeController, IMapper mapper
     if (result.Count() > 0)
     {
         apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
+
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
