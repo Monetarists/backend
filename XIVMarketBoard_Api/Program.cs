@@ -47,7 +47,7 @@ app.MapGet("/items", async (IRecipeController recipeController) =>
 
     if (result.Count > 0)
     {
-
+        apiResponse.Items = result;
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
@@ -81,6 +81,7 @@ app.MapGet("/recipes", async (IRecipeController recipeController) =>
 
     if (result.Count > 0)
     {
+        apiResponse.Recipes = result;
         apiResponse.message = "ok";
         return Results.Ok(apiResponse);
     }
