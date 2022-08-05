@@ -15,7 +15,6 @@ namespace XIVMarketBoard_Api.Controller
         IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> listings);
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
         Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
-        Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world);
         Task<string> ImportMarketableItems();
         Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world);
@@ -56,7 +55,7 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world)
         {
             var result = new UniversalisEntry();
-            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name);
+            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name, 0);
             if (response.IsSuccessStatusCode)
             {
 
@@ -76,9 +75,9 @@ namespace XIVMarketBoard_Api.Controller
 
             for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
             {
-
                 var itemColl = itemList.Skip(amount).Take(calloutSize);
-                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name);
+                //override callout to 7days
+                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name, 604800);
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
@@ -89,6 +88,7 @@ namespace XIVMarketBoard_Api.Controller
                     var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                     parsedResult.items = new List<UniversalisResponseItems>() { item };
                 }
+
                 uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new Exception("item is null"))));
                 //wait for api ratelimiting
                 await Task.Delay(80);
@@ -106,17 +106,7 @@ namespace XIVMarketBoard_Api.Controller
             var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world);
             return "Imported all items on world " + world.Name;
         }
-        public async Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world)
-        {
-            //TODO figure out if needed
-            foreach (var item in itemList)
-            {
-                var result = await _universalisApiRepository.GetUniversalisEntryForItems(new List<string>() { item.Id.ToString() }, world.Name);
-            }
 
-
-            return "";
-        }
 
         public UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item) =>
 
@@ -166,8 +156,8 @@ namespace XIVMarketBoard_Api.Controller
             });
 
 
-        public IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> listings) =>
-            listings.Select(i =>
+        public IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> saleHistoryList) =>
+            saleHistoryList.Where(s => _universalisApiRepository.UnixTimeStampToDateTimeSeconds(s.timestamp) > DateTime.UtcNow.AddDays(-1)).Select(i =>
                 new SaleHistory()
                 {
                     Quantity = i.quantity,
