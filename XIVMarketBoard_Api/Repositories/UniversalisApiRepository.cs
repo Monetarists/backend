@@ -22,7 +22,7 @@ namespace XIVMarketBoard_Api.Repositories
         {
             var idString = string.Join(",", idList);
             //removed listings to get all listgings from the api. 
-            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entriesWithin=" + entriesWithinSeconds;
+            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entriesWithin=\"" + entriesWithinSeconds + "\"";
             var response = await SendRequestAsync(requestAddress);
             return response;
         }
