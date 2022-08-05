@@ -4,7 +4,7 @@ namespace XIVMarketBoard_Api.Repositories
 {
     public interface IUniversalisApiRepository
     {
-        Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string hq, string world, int listings, int entries);
+        Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string world);
         DateTime UnixTimeStampToDateTimeSeconds(double unixTimeStamp);
         DateTime UnixTimeStampToDateTimeMilliSeconds(double unixTimeStamp);
         Task<HttpResponseMessage> GetUniversalisListMarketableItems();
@@ -16,11 +16,13 @@ namespace XIVMarketBoard_Api.Repositories
         //entries = number of history
         public const string baseAddress = "https://universalis.app/api/";
         private static readonly HttpClient client = new HttpClient();
-        public async Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string hq, string world, int listings, int entries)
+        //24h in seconds
+        private static string entriesWithinSeconds = "86400";
+        public async Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string world)
         {
             var idString = string.Join(",", idList);
             //removed listings to get all listgings from the api. 
-            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entries=" + entries + "&hq=" + hq;
+            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entriesWithin=" + entriesWithinSeconds;
             var response = await SendRequestAsync(requestAddress);
             return response;
         }

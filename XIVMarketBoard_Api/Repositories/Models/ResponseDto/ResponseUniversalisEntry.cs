@@ -26,5 +26,7 @@
         public double MaxPriceHQ { get; set; }
         public int? NqListingsCount { get; set; }
         public int? HqListingsCount { get; set; }
+        public int? NqSaleCount { get; set; }
+        public int? HqSaleCount { get; set; }
     }
 }
