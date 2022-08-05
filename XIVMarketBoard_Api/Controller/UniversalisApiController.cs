@@ -55,7 +55,7 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world)
         {
             var result = new UniversalisEntry();
-            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name, 0);
+            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name);
             if (response.IsSuccessStatusCode)
             {
 
@@ -77,7 +77,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 var itemColl = itemList.Skip(amount).Take(calloutSize);
                 //override callout to 7days
-                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name, 604800);
+                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name);
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
