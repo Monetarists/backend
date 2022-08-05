@@ -8,9 +8,6 @@ namespace XIVMarketBoard_Api.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CraftingCost",
-                table: "UniversalisEntries");
 
             migrationBuilder.AddColumn<int>(
                 name: "HqSaleCount",
@@ -35,11 +32,6 @@ namespace XIVMarketBoard_Api.Migrations
                 name: "NqSaleCount",
                 table: "UniversalisEntries");
 
-            migrationBuilder.AddColumn<double>(
-                name: "CraftingCost",
-                table: "UniversalisEntries",
-                type: "double",
-                nullable: true);
         }
     }
 }
