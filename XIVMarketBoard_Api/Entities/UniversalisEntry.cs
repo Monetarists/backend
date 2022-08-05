@@ -27,5 +27,8 @@ namespace XIVMarketBoard_Api.Entities
         public double MaxPrice { get; set; }
         public double MaxPriceNQ { get; set; }
         public double MaxPriceHQ { get; set; }
+        public double? CraftingCost { get; set; }
+        public int? NqListingsCount { get; set; }
+        public int? HqListingsCount { get; set; }
     }
 }

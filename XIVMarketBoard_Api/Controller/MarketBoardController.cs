@@ -42,7 +42,7 @@ namespace XIVMarketBoard_Api.Controller
         {
             var results = from itemId in _xivContext.UniversalisEntries.Where(i => itemList.Contains(i.Item)).Select(x => x.Item.Id).Distinct()
                           from universalisEntry in _xivContext.UniversalisEntries
-                          .Where(x => x.Item.Id == itemId)
+                          .Where(x => x.Item.Id == itemId && world.Id == x.World.Id)
                           .Include(x => x.Item)
                           .OrderByDescending(e => e.QueryDate)
                           .Take(1)

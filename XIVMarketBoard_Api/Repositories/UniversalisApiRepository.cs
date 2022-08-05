@@ -19,7 +19,8 @@ namespace XIVMarketBoard_Api.Repositories
         public async Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string hq, string world, int listings, int entries)
         {
             var idString = string.Join(",", idList);
-            var requestAddress = baseAddress + world + "/" + idString + "?listings=" + listings + "&entries=" + entries + "&hq=" + hq;
+            //removed listings to get all listgings from the api. 
+            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entries=" + entries + "&hq=" + hq;
             var response = await SendRequestAsync(requestAddress);
             return response;
         }
