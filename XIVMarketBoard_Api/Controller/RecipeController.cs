@@ -118,6 +118,7 @@ namespace XIVMarketBoard_Api.Controller
                 var tempRecipe = setRecipeVariables(recipe);
                 tempRecipe.Ingredients = setIngredientList(recipe.Ingredients);
                 tempRecipe.Item = setItemVariables(recipe.Item);
+                if (tempRecipe.Item.CanBeCrafted != true) { tempRecipe.Item.CanBeCrafted = true; }
                 recipesToUpsert.Add(setRecipeVariables(recipe));
 
             }
@@ -152,11 +153,11 @@ namespace XIVMarketBoard_Api.Controller
             tempItem.Name_fr = item.Name_fr;
             tempItem.Name_ja = item.Name_ja;
             tempItem.ItemUICategory = currentItemUcs.FirstOrDefault(i => i.Id == item.ItemUICategory.Id) ?? item.ItemUICategory;
-            if (item.ItemSearchCategory != null)
+            if (item.ItemSearchCategory != null && item.ItemSearchCategory.Id != 0)
             {
                 tempItem.ItemSearchCategory = currentItemScs.FirstOrDefault(i => i.Id == item.ItemSearchCategory.Id) ?? item.ItemSearchCategory;
             }
-            if (tempItem.CanBeCrafted != true) { tempItem.CanBeCrafted = true; }
+
             if (!currentItemScs.Contains(tempItem.ItemSearchCategory)) { currentItemScs.Add(tempItem.ItemSearchCategory); }
             if (!currentItemUcs.Contains(tempItem.ItemUICategory)) { currentItemUcs.Add(tempItem.ItemUICategory); }
             if (!currentItems.Contains(tempItem)) { currentItems.Add(tempItem); }
