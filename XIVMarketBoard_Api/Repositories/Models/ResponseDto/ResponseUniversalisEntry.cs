@@ -3,7 +3,8 @@
     public class ResponseUniversalisEntry
     {
         public int Id { get; set; }
-        public ResponseItem? Item { get; set; }
+        public double? CraftingCost { get; set; }
+        public string? Message { get; set; }
         public DateTime LastUploadDate { get; set; }
         public DateTime QueryDate { get; set; }
         public virtual ICollection<ResponseUniversalisPost>? Posts { get; set; }

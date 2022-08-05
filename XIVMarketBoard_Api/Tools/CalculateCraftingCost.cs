@@ -8,8 +8,8 @@ namespace XIVMarketBoard_Api.Tools
 {
     public interface ICalculateCraftingCost
     {
-        Task<List<ResponseCraftingCostDto>> GetCraftingCostRecipes(World world, List<Recipe> recipeList, List<Item> itemList);
-        ResponseCraftingCostDto MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe);
+        Task<List<ResponseRecipe>> GetCraftingCostRecipes(World world, List<Recipe> recipeList, List<Item> itemList);
+        ResponseRecipe MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe);
     }
     public class CalculateCraftingCost : ICalculateCraftingCost
     {
@@ -22,7 +22,7 @@ namespace XIVMarketBoard_Api.Tools
             _universalisController = universalisController;
             _mapper = mapper;
         }
-        public async Task<List<ResponseCraftingCostDto>> GetCraftingCostRecipes(World world, List<Recipe> recipeList, List<Item> itemList)
+        public async Task<List<ResponseRecipe>> GetCraftingCostRecipes(World world, List<Recipe> recipeList, List<Item> itemList)
         {
             var universalisList = await _marketBoardController.GetLatestUniversalisQueryForItems(itemList, world);
             var queryList = itemList.Where(x => !universalisList.Select(x => x.Item.Id).Contains(x.Id)).ToList();
@@ -42,7 +42,7 @@ namespace XIVMarketBoard_Api.Tools
                 resultUniversalisList.AddRange(
                     await _universalisController.ImportUniversalisDataForItemListAndWorld(queryList.Where(x => x.IsMarketable ?? false).ToList(), world, 5, 5));
             }
-            var returnList = new List<ResponseCraftingCostDto>();
+            var returnList = new List<ResponseRecipe>();
             foreach (Recipe r in recipeList)
             {
                 var recipeItemIds = r.Ingredients.Select(x => x.Item.Id);
@@ -57,22 +57,24 @@ namespace XIVMarketBoard_Api.Tools
 
             return returnList;
         }
-        public ResponseCraftingCostDto MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe)
+        public ResponseRecipe MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe)
         {
-            var returnResult = new ResponseCraftingCostDto();
-            _mapper.Map(universalisEntries.First(x => x.Item.Id == recipe.Item.Id), returnResult.UniversalisEntry);
-            returnResult.UniversalisEntry.Item = null;
+
+
+            var returnResult = _mapper.Map(recipe, new ResponseRecipe());
+            returnResult.UniversalisEntry = _mapper.Map(universalisEntries.First(x => x.Item.Id == recipe.Item.Id), new ResponseUniversalisEntry());
+            returnResult.Job = null;
+            returnResult.Ingredients = null;
             returnResult.UniversalisEntry.Posts = null;
             returnResult.UniversalisEntry.SaleHistory = null;
 
-            returnResult.RecipeId = recipe.Id;
             if (universalisEntries.Any(x => x.Item.Id != recipe.Item.Id && x.MinPrice == 0))
             {
-                returnResult.message = "Recipe contains one or more ingredients with minprice = 0";
-                returnResult.CraftingCost = 0;
+                returnResult.UniversalisEntry.Message = "Recipe contains one or more ingredients with minprice = 0";
+                returnResult.UniversalisEntry.CraftingCost = 0;
                 return returnResult;
             }
-            returnResult.CraftingCost = universalisEntries
+            returnResult.UniversalisEntry.CraftingCost = universalisEntries
                 .Where(x => recipe.Ingredients
                     .Select(i => i.Item.Id)
                     .Contains(x.Item.Id))

@@ -13,7 +13,7 @@ namespace XIVMarketBoard_Api.Entities
         public Item Item { get; set; } = new Item();
         public int AmountResult { get; set; }
         public virtual ICollection<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
-        public virtual Job job { get; set; } = new Job();
+        public virtual Job Job { get; set; } = new Job();
         public bool IsExpert { get; set; }
         public bool IsSpecializationRequired { get; set; }
     }
