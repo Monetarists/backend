@@ -156,7 +156,10 @@ namespace XIVMarketBoard_Api.Controller
                  MinPriceHQ = responseItem.minPriceHQ,
                  MaxPrice = responseItem.maxPrice,
                  MaxPriceNQ = responseItem.maxPriceNQ,
-                 MaxPriceHQ = responseItem.maxPriceHQ
+                 MaxPriceHQ = responseItem.maxPriceHQ,
+                 NqListingsCount = responseItem.listings.Count(x => !x.hq),
+                 HqListingsCount = responseItem.listings.Count(x => x.hq),
+
              };
 
 

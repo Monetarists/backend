@@ -9,6 +9,7 @@
         public DateTime QueryDate { get; set; }
         public virtual ICollection<ResponseUniversalisPost>? Posts { get; set; }
         public virtual ICollection<ResponseUniversalisHistory>? SaleHistory { get; set; }
+
         public double CurrentAveragePrice { get; set; }
         public double CurrentAveragePrinceNQ { get; set; }
         public double CurrentAveragePriceHQ { get; set; }
@@ -24,5 +25,7 @@
         public double MaxPrice { get; set; }
         public double MaxPriceNQ { get; set; }
         public double MaxPriceHQ { get; set; }
+        public int? NqListingsCount { get; set; }
+        public int? HqListingsCount { get; set; }
     }
 }
