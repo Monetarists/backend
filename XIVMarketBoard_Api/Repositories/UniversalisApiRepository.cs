@@ -16,13 +16,14 @@ namespace XIVMarketBoard_Api.Repositories
         //entries = number of history
         public const string baseAddress = "https://universalis.app/api/";
         private static readonly HttpClient client = new HttpClient();
-        //24h in seconds
+        //24h in s
         private static string entriesWithinSeconds = "86400";
+        private static int nrOfEntries = 300;
         public async Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string world)
         {
             var idString = string.Join(",", idList);
             //removed listings to get all listgings from the api. 
-            var requestAddress = baseAddress + world + "/" + idString + "?" /*+ "listings=" + listings*/ + "entriesWithin=\"" + entriesWithinSeconds + "\"";
+            var requestAddress = baseAddress + world + "/" + idString + "?" + "entries=" + nrOfEntries + "&entriesWithin=" + entriesWithinSeconds;
             var response = await SendRequestAsync(requestAddress);
             return response;
         }

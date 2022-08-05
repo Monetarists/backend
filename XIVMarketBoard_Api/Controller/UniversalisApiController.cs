@@ -16,9 +16,9 @@ namespace XIVMarketBoard_Api.Controller
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
         Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
         Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world);
-        Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
+        Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world);
         Task<string> ImportMarketableItems();
-        Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings);
+        Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world);
     }
 
     public class UniversalisApiController : IUniversalisApiController
@@ -53,7 +53,7 @@ namespace XIVMarketBoard_Api.Controller
             }
             return "Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync();
         }
-        public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings)
+        public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world)
         {
             var result = new UniversalisEntry();
             var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name);
@@ -69,7 +69,7 @@ namespace XIVMarketBoard_Api.Controller
             }
             throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
         }
-        public async Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings)
+        public async Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world)
         {
             List<UniversalisEntry> uniList = new List<UniversalisEntry>();
             //TODO fix an get marketable items only
@@ -103,7 +103,7 @@ namespace XIVMarketBoard_Api.Controller
         {
             var uniList = new List<UniversalisEntry>();
             var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => r.IsMarketable.HasValue && r.IsMarketable.Value).ToList();
-            var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world, 5, 5);
+            var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world);
             return "Imported all items on world " + world.Name;
         }
         public async Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world)
