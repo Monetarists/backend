@@ -9,7 +9,6 @@
         public DateTime QueryDate { get; set; }
         public virtual ICollection<ResponseUniversalisPost>? Posts { get; set; }
         public virtual ICollection<ResponseUniversalisHistory>? SaleHistory { get; set; }
-
         public double CurrentAveragePrice { get; set; }
         public double CurrentAveragePrinceNQ { get; set; }
         public double CurrentAveragePriceHQ { get; set; }
