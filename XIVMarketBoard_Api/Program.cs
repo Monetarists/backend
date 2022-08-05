@@ -201,7 +201,7 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
     }
     catch (Exception e)
     {
-        return Results.StatusCode(500);
+        return Results.Problem(e.Message);
     }
 })
 .WithName("get marketboard entries for item");
@@ -220,13 +220,13 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
         var resultList = await marketboardController.GetLatestUniversalisQueryForItems(itemNames.Take(10), worldName);
         foreach (var entry in resultList)
         {
-            if (DateTime.Now.AddHours(-6) > entry.LastUploadDate && DateTime.Now.AddMinutes(-30) > entry.QueryDate)
+            if (entry != null && DateTime.Now.AddHours(-6) > entry.LastUploadDate && DateTime.Now.AddMinutes(-30) > entry.QueryDate)
             {
                 outdatedList.Add(entry.Item);
             }
         }
 
-        var responseList = resultList.Where(a => !outdatedList.Contains(a.Item)).ToList();
+        var responseList = resultList.Where(a => a != null && !outdatedList.Contains(a.Item)).ToList();
         if (outdatedList.Count > 0) { responseList.AddRange(await universalisController.ImportUniversalisDataForItemListAndWorld(outdatedList, world, 5, 5)); }
         if (responseList.Count() > 0)
         {

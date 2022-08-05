@@ -16,7 +16,6 @@ namespace XIVMarketBoard_Api.Controller
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
         Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
         Task<string> ImportPostsForItems(IEnumerable<Item> itemList, World world);
-        Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings);
         Task<string> ImportMarketableItems();
         Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world, int entries, int listings);
@@ -57,7 +56,7 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world, int entries, int listings)
         {
             var result = new UniversalisEntry();
-            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, "", world.Name, listings, entries);
+            var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name);
             if (response.IsSuccessStatusCode)
             {
 
@@ -79,7 +78,7 @@ namespace XIVMarketBoard_Api.Controller
             {
 
                 var itemColl = itemList.Skip(amount).Take(calloutSize);
-                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), "", world.Name, 5, 5);
+                var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name);
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
@@ -103,7 +102,7 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
             var uniList = new List<UniversalisEntry>();
-            var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => (bool)r.IsMarketable).ToList();
+            var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => r.IsMarketable.HasValue && r.IsMarketable.Value).ToList();
             var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world, 5, 5);
             return "Imported all items on world " + world.Name;
         }
@@ -112,26 +111,13 @@ namespace XIVMarketBoard_Api.Controller
             //TODO figure out if needed
             foreach (var item in itemList)
             {
-                var result = await _universalisApiRepository.GetUniversalisEntryForItems(new List<string>() { item.Id.ToString() }, "", world.Name, 5, 5);
+                var result = await _universalisApiRepository.GetUniversalisEntryForItems(new List<string>() { item.Id.ToString() }, world.Name);
             }
 
 
             return "";
         }
-        public async Task<string> ImportPostsForRecipeAndComponents(Recipe recipe, World world, int entries, int listings)
-        {
-            //TODO figure out if needed
 
-            /*List<UniversalisQuery> list = new List<UniversalisQuery>();
-            foreach (var item in itemList)
-            {
-                var result = await UniversalisApiModel.GetCurrentListings(new List<string>() { item.Id.ToString() }, "", world.Name, listings, entries);
-            }
-
-
-            return list;*/
-            return "";
-        }
         public UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item) =>
 
              new UniversalisEntry
@@ -159,6 +145,8 @@ namespace XIVMarketBoard_Api.Controller
                  MaxPriceHQ = responseItem.maxPriceHQ,
                  NqListingsCount = responseItem.listings.Count(x => !x.hq),
                  HqListingsCount = responseItem.listings.Count(x => x.hq),
+                 NqSaleCount = responseItem.recentHistory.Count(x => !x.hq),
+                 HqSaleCount = responseItem.recentHistory.Count(x => x.hq),
 
              };
 
