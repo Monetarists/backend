@@ -44,6 +44,22 @@ app.MapGet("/Register", [Authorize] (IUserController userController, string user
 
 }).WithName("Register user");
 
+app.MapGet("/item/{itemId}", async (IRecipeController recipeController, IMapper mapper, int itemId) =>
+{
+    var result = await recipeController.GetItemFromId(itemId);
+    ResponseResult apiResponse = new ResponseResult();
+
+    if (result != null)
+    {
+
+        apiResponse.Items = new List<ResponseItem> { mapper.Map(result, new ResponseItem()) };
+        apiResponse.message = "ok";
+        return Results.Ok(apiResponse);
+    }
+    apiResponse.message = ResponseResult.noItemsMessage;
+    return Results.NotFound(apiResponse);
+})
+.WithName("get info for a specific item");
 
 app.MapGet("/items", async (IRecipeController recipeController, IMapper mapper) =>
 {
@@ -62,50 +78,9 @@ app.MapGet("/items", async (IRecipeController recipeController, IMapper mapper) 
 })
 .WithName("get all items from db");
 
-app.MapGet("/items/{itemId}", async (IRecipeController recipeController, IMapper mapper, int itemId) =>
+app.MapGet("/recipe/{recipeId}", async (IRecipeController recipeController, IMapper mapper, int recipeId) =>
 {
-    var result = await recipeController.GetItemFromId(itemId);
-    ResponseResult apiResponse = new ResponseResult();
-
-    if (result != null)
-    {
-
-        apiResponse.Items = new List<ResponseItem> { mapper.Map(result, new ResponseItem()) };
-        apiResponse.message = "ok";
-        return Results.Ok(apiResponse);
-    }
-    apiResponse.message = ResponseResult.noItemsMessage;
-    return Results.NotFound(apiResponse);
-})
-.WithName("get info for a specific item");
-
-
-
-app.MapGet("/recipes", async (IRecipeController recipeController, IMapper mapper) =>
-{
-    var result = await recipeController.GetAllRecipesList();
-    ResponseResult apiResponse = new ResponseResult();
-
-    if (result.Any())
-    {
-        apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
-
-        apiResponse.message = "ok";
-        return Results.Ok(apiResponse);
-    }
-    apiResponse.message = ResponseResult.noItemsMessage;
-    return Results.NotFound(apiResponse);
-})
-.WithName("get all recipes from db");
-
-app.MapGet("/recipes/{recipeId}", async (IRecipeController recipeController, IMapper mapper, int recipeId) =>
-{
-    var result = new List<Recipe>();
-    if (recipeId != null)
-    {
-        result = await recipeController.GetRecipesByIds(new List<int> { recipeId }).ToListAsync();
-    }
-
+    var result = await recipeController.GetRecipesByIds(new List<int> { recipeId }).ToListAsync();
     ResponseResult apiResponse = new ResponseResult();
 
     if (result.Count > 0)
@@ -120,7 +95,7 @@ app.MapGet("/recipes/{recipeId}", async (IRecipeController recipeController, IMa
 })
 .WithName("get info for a specific recipe based on recipe id");
 
-app.MapGet("/recipes/{recipeId}/{worldName}", async (IDataCentreController dataCentreController, IRecipeController recipeController, ICalculateCraftingCost calculateCraftingCost, IMapper mapper, int recipeId, string worldName) =>
+app.MapGet("/recipe/{recipeId}/{worldName}", async (IDataCentreController dataCentreController, IRecipeController recipeController, ICalculateCraftingCost calculateCraftingCost, IMapper mapper, int recipeId, string worldName) =>
 {
     ResponseResult apiResponse = new ResponseResult();
     var world = await dataCentreController.GetWorldFromName(worldName);
@@ -145,6 +120,25 @@ app.MapGet("/recipes/{recipeId}/{worldName}", async (IDataCentreController dataC
 
 })
 .WithName("get crafting cost for recipe");
+
+app.MapGet("/recipes", async (IRecipeController recipeController, IMapper mapper) =>
+{
+    var result = await recipeController.GetAllRecipesList();
+    ResponseResult apiResponse = new ResponseResult();
+
+    if (result.Any())
+    {
+        apiResponse.Recipes = mapper.Map(result, new List<ResponseRecipe>());
+
+        apiResponse.message = "ok";
+        return Results.Ok(apiResponse);
+    }
+    apiResponse.message = ResponseResult.noItemsMessage;
+    return Results.NotFound(apiResponse);
+})
+.WithName("get all recipes from db");
+
+
 app.MapGet("/recipes/{jobAbr}/{worldName}", async (IDataCentreController dataCentreController, IRecipeController recipeController, ICalculateCraftingCost calculateCraftingCost, string jobAbr, string worldName) =>
 {
     ResponseResult apiResponse = new ResponseResult();
