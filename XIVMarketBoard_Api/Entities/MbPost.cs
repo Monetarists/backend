@@ -6,7 +6,7 @@ namespace XIVMarketBoard_Api.Entities
     public class MbPost
     {
         [Key]
-        public string Id { get; set; }
+        public string Id { get; set; } = "";
         public virtual User? User { get; set; }
         public virtual Retainer? Retainer { get; set; }
         public string RetainerName { get; set; } = "";

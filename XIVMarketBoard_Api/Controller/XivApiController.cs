@@ -19,6 +19,8 @@ namespace XIVMarketBoard_Api.Controller
         private readonly IXivApiRepository _xivApiRepository;
         private readonly IDataCentreController _dataCentreController;
         private readonly IRecipeController _recipeController;
+        private List<World> worldList = new List<World>();
+        private List<DataCenter> dataCenterList = new List<DataCenter>();
         public XivApiController(IXivApiRepository xivApiRepository, IDataCentreController dataCentreController, IRecipeController recipeController)
         {
             _xivApiRepository = xivApiRepository;
@@ -28,8 +30,8 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<string> ImportWorldsDataCentres()
         {
-            var worldList = new List<World>();
-            var dataCenterList = new List<DataCenter>();
+            worldList = new List<World>();
+            dataCenterList = new List<DataCenter>();
             var response = await _xivApiRepository.GetAllWorldsAsync();
             if (!response.IsSuccessStatusCode)
             {
@@ -43,37 +45,45 @@ namespace XIVMarketBoard_Api.Controller
                 if (server.Name_en != "")
                 {
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
+                    if (!responseWd.IsSuccessStatusCode)
+                    {
+                        throw new HttpListenerException((int)responseWd.StatusCode, "xivApi returned an error code");
+                    }
                     var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
-                    if (apiResponse == null)
+                    if (apiResponse is null)
                     {
                         throw new JsonException("JsonConvert returned null object");
                     }
-                    if (apiResponse.InGame && apiResponse.Name_en != "")
-                    {
-                        var dcEntity = dataCenterList.FirstOrDefault(p => p.Id == apiResponse.DataCenter.Id);
-                        if (dcEntity == null)
-                        {
-                            dcEntity = new DataCenter();
-                            dcEntity.Name = apiResponse.DataCenter.Name_en;
-                            dcEntity.Id = apiResponse.DataCenter.Id;
-                            dcEntity.Region = apiResponse.DataCenter.Region;
-                            dataCenterList.Add(dcEntity);
-                        }
-
-                        var world = new World();
-                        world.Id = apiResponse.Id;
-                        world.Name = apiResponse.Name;
-                        world.DataCenter = dcEntity;
-                        worldList.Add(world);
-                    }
+                    setVariables(apiResponse);
                     await Task.Delay(100);
                 }
 
             }
-            var distintcDataCenters = dataCenterList.Distinct().ToList();
-            await _dataCentreController.SaveDataCenters(distintcDataCenters);
+
+            await _dataCentreController.SaveDataCenters(dataCenterList);
             await _dataCentreController.SaveWorlds(worldList);
             return "import of worlds successful";
+        }
+        public void setVariables(XivApiWorldDetailResult apiResponse)
+        {
+            if (apiResponse.InGame && apiResponse.Name_en != "")
+            {
+                var dcEntity = dataCenterList.FirstOrDefault(p => p.Id == apiResponse.DataCenter.Id);
+                if (dcEntity == null)
+                {
+                    dcEntity = new DataCenter();
+                    dcEntity.Name = apiResponse.DataCenter.Name_en;
+                    dcEntity.Id = apiResponse.DataCenter.Id;
+                    dcEntity.Region = apiResponse.DataCenter.Region;
+                    dataCenterList.Add(dcEntity);
+                }
+
+                var world = new World();
+                world.Id = apiResponse.Id;
+                world.Name = apiResponse.Name;
+                world.DataCenter = dcEntity;
+                worldList.Add(world);
+            }
         }
 
         public async Task<string> ImportRecipiesAndItems()
@@ -146,7 +156,7 @@ namespace XIVMarketBoard_Api.Controller
                     Name_ja = r.ItemResult.Name_ja ?? "",
 
                     ItemSearchCategory = r.ItemResult.ItemSearchCategory != null ? createItemSearchCategory(r.ItemResult.ItemSearchCategory) : null,
-                    ItemUICategory = createItemUiCategory(r.ItemResult.ItemUICategory) ?? new ItemUICategory(),
+                    ItemUICategory = r.ItemResult.ItemUICategory != null ? createItemUiCategory(r.ItemResult.ItemUICategory) : new ItemUICategory(),
                     CanBeHq = r.ItemResult.CanBeHq ?? false,
                 },
                 AmountResult = r.AmountResult

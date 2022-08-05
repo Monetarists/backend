@@ -11,13 +11,13 @@ using System.Linq;
 using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
-var services = Builder.ConfigureServices(builder);
+Builder.ConfigureServices(builder);
 
 var app = Builder.ConfigureWebApp(builder);
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {
-    AuthenticateRequest req = new AuthenticateRequest() { UserName = username, Password = password };
+    var req = new AuthenticateRequest(username, password);
     var response = userController.Authenticate(req);
 
     if (response.Token != null)
@@ -30,7 +30,7 @@ app.MapGet("/Authenticate", (IUserController userController, string username, st
 app.MapGet("/Register", [Authorize] (IUserController userController, string username, string password) =>
 {
     string error;
-    RegisterRequest req = new RegisterRequest() { UserName = username, Password = password };
+    var req = new RegisterRequest(username, password);
     try
     {
         userController.Register(req);
@@ -64,9 +64,9 @@ app.MapGet("/item/{itemId}", async (IRecipeController recipeController, IMapper 
 app.MapGet("/items", async (IRecipeController recipeController, IMapper mapper) =>
 {
     ResponseResult apiResponse = new ResponseResult();
-    var result = await recipeController.GetAllItems().ToListAsync();
+    var result = await recipeController.GetAllItems();
 
-    if (result.Count > 0)
+    if (result.Any())
     {
         apiResponse.Items = mapper.Map(result, new List<ResponseItem>());
         apiResponse.message = "ok";
@@ -227,8 +227,8 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
         }
 
         var responseList = resultList.Where(a => a != null && !outdatedList.Contains(a.Item)).ToList();
-        if (outdatedList.Count > 0) { responseList.AddRange(await universalisController.ImportUniversalisDataForItemListAndWorld(outdatedList, world)); }
-        if (responseList.Count() > 0)
+        if (outdatedList.Any()) { responseList.AddRange(await universalisController.ImportUniversalisDataForItemListAndWorld(outdatedList, world)); }
+        if (responseList.Any())
         {
             var responseResult = new ResponseResult();
             responseResult.UniversalisEntries = mapper.Map(responseList, new List<ResponseUniversalisEntry>());
