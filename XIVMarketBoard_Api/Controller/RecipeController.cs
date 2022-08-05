@@ -50,11 +50,11 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<Recipe?> GetRecipeFromName(string recipeName) => await _xivContext.Recipes.FirstOrDefaultAsync(r => r.Name_en == recipeName);
         public async Task<Recipe?> GetRecipeFromNameIncludeIngredients(string recipeName) => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).FirstOrDefaultAsync(r => r.Name_en == recipeName);
-        public IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
-        public IAsyncEnumerable<Recipe> GetMarketableRecipesByJob(string jobAbrv) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Where(r => r.job.Abbreviation == jobAbrv && r.Item.IsMarketable == true).AsAsyncEnumerable();
-        public IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemIds) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).Where(r => itemIds.Contains(r.Item.Id)).AsAsyncEnumerable();
-        public IAsyncEnumerable<Recipe> GetAllRecipes() => _xivContext.Set<Recipe>().Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).AsAsyncEnumerable();
-        public async Task<IEnumerable<Recipe>> GetAllRecipesList() => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.job).ToListAsync();
+        public IAsyncEnumerable<Recipe> GetRecipesByIds(List<int> recipeId) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.Job).Where(r => recipeId.Contains(r.Id)).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetMarketableRecipesByJob(string jobAbrv) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Where(r => r.Job.Abbreviation == jobAbrv && r.Item.IsMarketable == true).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetRecipesByItemIds(List<int> itemIds) => _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.Job).Where(r => itemIds.Contains(r.Item.Id)).AsAsyncEnumerable();
+        public IAsyncEnumerable<Recipe> GetAllRecipes() => _xivContext.Set<Recipe>().Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.Job).AsAsyncEnumerable();
+        public async Task<IEnumerable<Recipe>> GetAllRecipesList() => await _xivContext.Recipes.Include(r => r.Ingredients).ThenInclude(p => p.Item).Include(r => r.Item).Include(r => r.Job).ToListAsync();
         public async Task<Dictionary<int, string>> GetAllRecipeNames() => await _xivContext.Recipes.Select(recipe => new KeyValuePair<int, string>(recipe.Id, recipe.Name_en)).ToDictionaryAsync(r => r.Key, r => r.Value);
         public IAsyncEnumerable<Recipe> GetAllRecipesIncludeItem() => _xivContext.Set<Recipe>().Include(i => i.Item).AsAsyncEnumerable();
         public IAsyncEnumerable<Recipe> GetRecipesFromNameCollIncludeIngredients(IEnumerable<string> recipeNames) => _xivContext.Recipes.Include(i => i.Ingredients).ThenInclude(p => p.Item).Where(r => recipeNames.Contains(r.Name_en)).ToAsyncEnumerable();
@@ -173,12 +173,12 @@ namespace XIVMarketBoard_Api.Controller
             tempRecipe.AmountResult = recipe.AmountResult;
             tempRecipe.IsExpert = recipe.IsExpert;
             tempRecipe.IsSpecializationRequired = recipe.IsSpecializationRequired;
-            tempRecipe.job = currentJobs.FirstOrDefault(j => j.Id == recipe.job.Id) ?? recipe.job;
+            tempRecipe.Job = currentJobs.FirstOrDefault(j => j.Id == recipe.Job.Id) ?? recipe.Job;
 
             if (!currentItemScs.Contains(tempRecipe.Item.ItemSearchCategory)) { currentItemScs.Add(tempRecipe.Item.ItemSearchCategory); }
             if (!currentItemUcs.Contains(tempRecipe.Item.ItemUICategory)) { currentItemUcs.Add(tempRecipe.Item.ItemUICategory); }
 
-            if (!currentJobs.Contains(tempRecipe.job)) { currentJobs.Add(tempRecipe.job); }
+            if (!currentJobs.Contains(tempRecipe.Job)) { currentJobs.Add(tempRecipe.Job); }
             return tempRecipe;
         }
 

@@ -7,7 +7,6 @@ namespace XIVMarketBoard_Api.Repositories.Models.ResponseDto
         public string? message { get; set; }
         public IEnumerable<ResponseItem>? Items { get; set; }
         public IEnumerable<ResponseRecipe>? Recipes { get; set; }
-        public IEnumerable<ResponseUniversalisEntry>? UniversalisEntry { get; set; }
-        public IEnumerable<ResponseCraftingCostDto>? CraftingCosts { get; set; }
+        public IEnumerable<ResponseUniversalisEntry>? UniversalisEntries { get; set; }
     }
 }
