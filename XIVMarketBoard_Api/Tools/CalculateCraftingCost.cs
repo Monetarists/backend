@@ -40,7 +40,7 @@ namespace XIVMarketBoard_Api.Tools
             if (queryList.Any())
             {
                 resultUniversalisList.AddRange(
-                    await _universalisController.ImportUniversalisDataForItemListAndWorld(queryList.Where(x => x.IsMarketable ?? false).ToList(), world, 5, 5));
+                    await _universalisController.ImportUniversalisDataForItemListAndWorld(queryList.Where(x => x.IsMarketable ?? false).ToList(), world));
             }
             var returnList = new List<ResponseRecipe>();
             foreach (Recipe r in recipeList)
