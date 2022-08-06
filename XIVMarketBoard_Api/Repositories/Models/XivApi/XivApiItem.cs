@@ -2,16 +2,16 @@
 {
     public class XivApiItem
     {
-        public int? ID;
-        public string? Name_de = "";
-        public string? Name_en = "";
-        public string? Name_fr = "";
-        public string? Name_ja = "";
-        public int? IconID;
-        public bool? CanBeHq;
-        public int? IsUntradable;
-        public XivApiItemSearchCategory? ItemSearchCategory;
-        public XivApiItemUiCategory? ItemUICategory;
+        public int? ID { get; set; }
+        public string? Name_de { get; set; } = "";
+        public string? Name_en { get; set; } = "";
+        public string? Name_fr { get; set; } = "";
+        public string? Name_ja { get; set; } = "";
+        public int? IconID { get; set; }
+        public bool? CanBeHq { get; set; }
+        public int? IsUntradable { get; set; }
+        public XivApiItemSearchCategory? ItemSearchCategory { get; set; }
+        public XivApiItemUiCategory? ItemUICategory { get; set; }
 
     }
 

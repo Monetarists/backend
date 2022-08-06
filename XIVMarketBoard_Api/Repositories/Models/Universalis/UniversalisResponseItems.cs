@@ -5,8 +5,8 @@ public class UniversalisResponseItems
     public string itemId { get; set; } = "";
     public string worldId { get; set; } = "";
     public double lastUploadTime { get; set; }
-    public IEnumerable<UniversalisListings> listings { get; set; } = new UniversalisListings[] { };
-    public IEnumerable<UniversalisRecentHistory> recentHistory { get; set; } = new UniversalisRecentHistory[] { };
+    public IEnumerable<UniversalisListings> listings { get; set; } = Array.Empty<UniversalisListings>();
+    public IEnumerable<UniversalisRecentHistory> recentHistory { get; set; } = Array.Empty<UniversalisRecentHistory>();
     public double currentAveragePrice { get; set; }
     public double currentAveragePriceNQ { get; set; }
     public double currentAveragePriceHQ { get; set; }
