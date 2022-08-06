@@ -3,6 +3,6 @@
     public class XivApiResponeResults
     {
         public XivApiPagination Pagination { get; set; } = new XivApiPagination();
-        public XivApiResult[] Results { get; set; } = new XivApiResult[] { };
+        public XivApiResult[] Results { get; set; } = Array.Empty<XivApiResult>();
     }
 }

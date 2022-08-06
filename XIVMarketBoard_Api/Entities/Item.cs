@@ -11,7 +11,7 @@ namespace XIVMarketBoard_Api.Entities
         public string Name_fr { get; set; } = "";
         public string Name_ja { get; set; } = "";
         public ItemSearchCategory? ItemSearchCategory { get; set; }
-        public ItemUICategory ItemUICategory { get; set; }
+        public ItemUICategory ItemUICategory { get; set; } = new ItemUICategory();
         public bool? CanBeCrafted { get; set; }
         public bool CanBeHq { get; set; }
         public bool? IsMarketable { get; set; }
