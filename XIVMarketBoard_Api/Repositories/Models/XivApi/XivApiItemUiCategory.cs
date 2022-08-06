@@ -2,10 +2,10 @@
 {
     public class XivApiItemUiCategory
     {
-        public int? ID;
-        public string? Name_de;
-        public string? Name_en;
-        public string? Name_fr;
-        public string? Name_ja;
+        public int? ID { get; set; }
+        public string? Name_de { get; set; }
+        public string? Name_en { get; set; }
+        public string? Name_fr { get; set; }
+        public string? Name_ja { get; set; }
     }
 }

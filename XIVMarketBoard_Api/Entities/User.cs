@@ -7,7 +7,7 @@ namespace XIVMarketBoard_Api.Entities
     public class User
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string Id { get; set; }
+        public string Id { get; set; } = "";
         public string UserName { get; set; } = "";
         public string Email { get; set; } = "";
         public string? CharacterName { get; set; }
@@ -15,6 +15,6 @@ namespace XIVMarketBoard_Api.Entities
         public bool ApiAdmin { get; set; } = false;
         public bool WebAdmin { get; set; } = false;
         [JsonIgnore]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = "";
     }
 }
