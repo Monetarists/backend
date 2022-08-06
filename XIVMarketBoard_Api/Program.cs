@@ -191,9 +191,6 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
         responseResult.UniversalisEntries = new List<ResponseUniversalisEntry> { mapper.Map(result, new ResponseUniversalisEntry()) };
         responseResult.message = "ok";
         return Results.Ok(responseResult);
-
-
-        return Results.NotFound("No marketboard entries found");
     }
     catch (Exception e)
     {
