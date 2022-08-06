@@ -4,6 +4,11 @@
 
     public class RegisterRequest
     {
+        public RegisterRequest(string userName, string password)
+        {
+            UserName = userName;
+            Password = password;
+        }
 
         [Required]
         public string UserName { get; set; }

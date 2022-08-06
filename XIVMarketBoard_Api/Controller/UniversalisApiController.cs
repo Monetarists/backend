@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models.Universalis;
 using XIVMarketBoard_Api.Events;
-using System;
+using XIVMarketBoard_Api.Helpers;
 using Coravel.Queuing.Interfaces;
 
 namespace XIVMarketBoard_Api.Controller
@@ -12,7 +12,7 @@ namespace XIVMarketBoard_Api.Controller
     public interface IUniversalisApiController
     {
         IEnumerable<MbPost> CreateMbPostEntries(IEnumerable<UniversalisListings> listings);
-        IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> listings);
+        IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> saleHistoryList);
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
         Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
         Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world);
@@ -22,7 +22,7 @@ namespace XIVMarketBoard_Api.Controller
 
     public class UniversalisApiController : IUniversalisApiController
     {
-        private int calloutSize = 100;
+        private readonly int _calloutSize = 100;
         private readonly IMarketBoardController _marketBoardApiController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
         private readonly IRecipeController _recipeController;
@@ -54,12 +54,12 @@ namespace XIVMarketBoard_Api.Controller
         }
         public async Task<UniversalisEntry> ImportUniversalisDataForItemAndWorld(Item item, World world)
         {
-            var result = new UniversalisEntry();
             var response = await _universalisApiRepository.GetUniversalisEntryForItems(new string[] { item.Id.ToString() }, world.Name);
             if (response.IsSuccessStatusCode)
             {
 
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException("response from universalis is null");
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ??
+                    throw new AppException("response from universalis is null " + item.Id + " " + item.Name_en);
 
                 var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
                 var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
@@ -71,19 +71,17 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<IEnumerable<UniversalisEntry>> ImportUniversalisDataForItemListAndWorld(List<Item> itemList, World world)
         {
             List<UniversalisEntry> uniList = new List<UniversalisEntry>();
-            //TODO fix an get marketable items only
 
-            for (var amount = 0; itemList.Count >= amount; amount += calloutSize)
+            for (var amount = 0; itemList.Count >= amount; amount += _calloutSize)
             {
-                var itemColl = itemList.Skip(amount).Take(calloutSize);
-                //override callout to 7days
+                var itemColl = itemList.Skip(amount).Take(_calloutSize);
                 var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name);
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException("Callout failed " + response.StatusCode + await response.Content.ReadAsStringAsync());
                 }
                 var parsedResult = JsonConvert.DeserializeObject<UniversalisResponse>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
-                if (parsedResult.items.Count() == 0)
+                if (!parsedResult.items.Any())
                 {
                     var item = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new Exception("response from universalis is null");
                     parsedResult.items = new List<UniversalisResponseItems>() { item };
@@ -101,9 +99,8 @@ namespace XIVMarketBoard_Api.Controller
 
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
         {
-            var uniList = new List<UniversalisEntry>();
-            var itemList = _recipeController.GetAllItems().ToListAsync().Result.Where(r => r.IsMarketable.HasValue && r.IsMarketable.Value).ToList();
-            var universalisResults = await ImportUniversalisDataForItemListAndWorld(itemList, world);
+            var itemList = _recipeController.GetAllItems().Result.Where(r => r.IsMarketable.HasValue && r.IsMarketable.Value).ToList();
+            await ImportUniversalisDataForItemListAndWorld(itemList, world);
             return "Imported all items on world " + world.Name;
         }
 
@@ -135,8 +132,8 @@ namespace XIVMarketBoard_Api.Controller
                  MaxPriceHQ = responseItem.maxPriceHQ,
                  NqListingsCount = responseItem.listings.Count(x => !x.hq),
                  HqListingsCount = responseItem.listings.Count(x => x.hq),
-                 NqSaleCount = responseItem.recentHistory.Count(x => !x.hq),
-                 HqSaleCount = responseItem.recentHistory.Count(x => x.hq),
+                 NqSaleCount = responseItem.recentHistory.Where(s => _universalisApiRepository.UnixTimeStampToDateTimeSeconds(s.timestamp) > DateTime.UtcNow.AddDays(-1)).Count(s => !s.hq),
+                 HqSaleCount = responseItem.recentHistory.Where(s => _universalisApiRepository.UnixTimeStampToDateTimeSeconds(s.timestamp) > DateTime.UtcNow.AddDays(-1)).Count(s => s.hq)
 
              };
 

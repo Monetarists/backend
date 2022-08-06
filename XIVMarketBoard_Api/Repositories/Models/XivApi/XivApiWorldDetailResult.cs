@@ -2,10 +2,10 @@
 {
     public class XivApiWorldDetailResult
     {
-        public int Id;
-        public string Name = "";
-        public string Name_en = "";
-        public bool InGame;
-        public XivApiDataCenterResult DataCenter = new XivApiDataCenterResult();
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Name_en { get; set; } = "";
+        public bool InGame { get; set; }
+        public XivApiDataCenterResult DataCenter { get; set; } = new XivApiDataCenterResult();
     }
 }

@@ -1,13 +1,10 @@
 ﻿using XIVMarketBoard_Api.Entities;
+using XIVMarketBoard_Api.Helpers;
 using Newtonsoft.Json;
-using System.Net;
-using System.Text;
 using XIVMarketBoard_Api.Data;
-using System;
 using Microsoft.EntityFrameworkCore;
-using System.Reactive;
 using System.Reactive.Linq;
-using System.Linq;
+
 
 
 namespace XIVMarketBoard_Api.Controller
@@ -17,13 +14,17 @@ namespace XIVMarketBoard_Api.Controller
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
 
-        Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
+        Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> entryList);
         Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
         Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world);
     }
 
     public class MarketBoardController : IMarketBoardController
     {
+        private List<MbPost> currentPosts = new List<MbPost>();
+        private List<UniversalisEntry> currentEntries = new List<UniversalisEntry>();
+        private List<Item> currentItems = new List<Item>();
+        private List<World> currentWorlds = new List<World>();
         private readonly XivDbContext _xivContext;
         public MarketBoardController(XivDbContext xivContext)
         {
@@ -64,47 +65,34 @@ namespace XIVMarketBoard_Api.Controller
         }
 
 
-        public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList)
+        public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> entryList)
         {
 
-            var currentPosts = _xivContext.Posts.ToList();
-            var currentEntries = _xivContext.UniversalisEntries.ToList();
-            var currentItems = _xivContext.Items.ToList();
-            var currentWorlds = _xivContext.Worlds.ToList();
+            currentPosts = _xivContext.Posts.ToList();
+            currentEntries = _xivContext.UniversalisEntries.ToList();
+            currentItems = _xivContext.Items.ToList();
+            currentWorlds = _xivContext.Worlds.ToList();
             var returnList = new List<UniversalisEntry>();
 
             var resultList = new List<UniversalisEntry>();
 
-            foreach (var q in qList)
+            foreach (var entry in entryList)
             {
-                if (q.Item is null)
+                if (entry.Item is null)
                 {
-                    throw new ArgumentNullException("Item Id is null");
+                    throw new AppException("Item Id is null when creating universalis query " + JsonConvert.SerializeObject(entry));
                 }
                 var universlisEntry = currentEntries.FirstOrDefault(r =>
-                        r.Item.Id == q.Item.Id &&
-                        r.World.Id == q.World.Id &&
-                        r.LastUploadDate == q.LastUploadDate);
+                        r.Item.Id == entry.Item.Id &&
+                        r.World.Id == entry.World.Id &&
+                        r.LastUploadDate == entry.LastUploadDate);
                 if (universlisEntry is null)
                 {
-                    var tempList = new List<MbPost>();
-                    foreach (var p in q.Posts)
-                    {
-                        tempList.Add(currentPosts.FirstOrDefault(r => r.Id == p.Id) ?? p);
+                    resultList.Add(SetUniversalisVariables(entry));
+                    continue;
+                }
+                returnList.Add(universlisEntry);
 
-                        if (!currentPosts.Contains(p)) { currentPosts.Add(p); }
-                    }
-                    q.Posts = tempList;
-                    q.Item = currentItems.FirstOrDefault(r => r.Id == q.Item.Id) ?? q.Item;
-                    q.World = currentWorlds.FirstOrDefault(r => r.Id == q.World.Id) ?? q.World;
-                    if (!currentItems.Contains(q.Item)) { currentItems.Add(q.Item); }
-                    if (!currentEntries.Contains(q)) { currentEntries.Add(q); }
-                    resultList.Add(q);
-                }
-                else
-                {
-                    returnList.Add(universlisEntry);
-                }
             }
             //Planetscale db errors when too many recipes are saved at once
             for (var i = 0; resultList.Count > i; i += 1000)
@@ -117,6 +105,23 @@ namespace XIVMarketBoard_Api.Controller
             }
             return returnList;
 
+
+        }
+        public UniversalisEntry SetUniversalisVariables(UniversalisEntry entry)
+        {
+            var tempList = new List<MbPost>();
+            foreach (var p in entry.Posts)
+            {
+                tempList.Add(currentPosts.FirstOrDefault(r => r.Id == p.Id) ?? p);
+
+                if (!currentPosts.Contains(p)) { currentPosts.Add(p); }
+            }
+            entry.Posts = tempList;
+            entry.Item = currentItems.FirstOrDefault(r => r.Id == entry.Item.Id) ?? entry.Item;
+            entry.World = currentWorlds.FirstOrDefault(r => r.Id == entry.World.Id) ?? entry.World;
+            if (!currentItems.Contains(entry.Item)) { currentItems.Add(entry.Item); }
+            if (!currentEntries.Contains(entry)) { currentEntries.Add(entry); }
+            return entry;
 
         }
     }
