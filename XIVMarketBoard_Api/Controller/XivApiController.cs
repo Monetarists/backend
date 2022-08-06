@@ -47,7 +47,6 @@ namespace XIVMarketBoard_Api.Controller
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
                     if (!responseWd.IsSuccessStatusCode)
                     {
-                        var a = JsonConvert.DeserializeObject(await responseWd.Content.ReadAsStringAsync());
                         throw new HttpListenerException((int)responseWd.StatusCode, "xivApi returned an error code " + JsonConvert.DeserializeObject(await responseWd.Content.ReadAsStringAsync()));
                     }
                     var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());

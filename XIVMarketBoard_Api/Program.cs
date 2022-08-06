@@ -176,26 +176,22 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
         if (item is null) return Results.NotFound("Item name gave no result");
         if (world is null) return Results.NotFound("World name gave no result");
         var result = await marketboardController.GetLatestUniversalisQueryForItem(item.Name_en, world.Name);
-        if (result == null || (result != null &&
-        DateTime.Now.AddHours(-6) > result.LastUploadDate &&
-        DateTime.Now.AddHours(-1) > result.QueryDate))
+        var responseResult = new ResponseResult();
+
+        if (result == null ||
+        (DateTime.Now.AddHours(-6) > result.LastUploadDate && DateTime.Now.AddHours(-1) > result.QueryDate))
         {
             var updatedEntry = await universalisController.ImportUniversalisDataForItemAndWorld(item, world);
             if (updatedEntry is null) return Results.NotFound("Universalis returned no entries for item");
 
-            var responseResult = new ResponseResult();
             responseResult.UniversalisEntries = new List<ResponseUniversalisEntry> { mapper.Map(updatedEntry, new ResponseUniversalisEntry()) };
             responseResult.message = "ok";
             return Results.Ok(responseResult);
         }
+        responseResult.UniversalisEntries = new List<ResponseUniversalisEntry> { mapper.Map(result, new ResponseUniversalisEntry()) };
+        responseResult.message = "ok";
+        return Results.Ok(responseResult);
 
-        if (result != null)
-        {
-            var responseResult = new ResponseResult();
-            responseResult.UniversalisEntries = new List<ResponseUniversalisEntry> { mapper.Map(result, new ResponseUniversalisEntry()) };
-            responseResult.message = "ok";
-            return Results.Ok(responseResult);
-        }
 
         return Results.NotFound("No marketboard entries found");
     }
