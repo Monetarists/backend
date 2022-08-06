@@ -3,10 +3,10 @@
     public class XivApiResult
     {
         public int Id { get; set; }
-        public string Name_de { get; set; }
-        public string Name_en { get; set; }
-        public string Name_fr { get; set; }
-        public string Name_ja { get; set; }
+        public string Name_de { get; set; } = "";
+        public string Name_en { get; set; } = "";
+        public string Name_fr { get; set; } = "";
+        public string Name_ja { get; set; } = "";
         public int IconID { get; set; }
         public int IsExpert { get; set; }
         public int IsSpecializationRequired { get; set; }

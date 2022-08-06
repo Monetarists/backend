@@ -19,14 +19,13 @@ namespace XIVMarketBoard_Api.Repositories
     {
         private const string baseAddress = "https://xivapi.com/";
         private readonly IConfiguration configuration;
-        private readonly string apikey;
 
         private static readonly HttpClient client = new HttpClient();
 
         public XivApiRepository(IConfiguration configuration)
         {
             this.configuration = configuration;
-            apikey = configuration.GetSection("ApiKey:XivApiKey").Value;
+
 
         }
 
@@ -59,8 +58,9 @@ namespace XIVMarketBoard_Api.Repositories
 
         private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
         {
+
             HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
-            client.DefaultRequestHeaders.Add("private_key", apikey);
+            client.DefaultRequestHeaders.Add("private_key", configuration.GetSection("ApiKey:XivApiKey").Value);
             var content = new StringContent(body, Encoding.UTF8, "application/json");
             rM.Content = content;
             var result = await client.SendAsync(rM);

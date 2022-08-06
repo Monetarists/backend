@@ -1,13 +1,10 @@
 ﻿using XIVMarketBoard_Api.Entities;
+using XIVMarketBoard_Api.Helpers;
 using Newtonsoft.Json;
-using System.Net;
-using System.Text;
 using XIVMarketBoard_Api.Data;
-using System;
 using Microsoft.EntityFrameworkCore;
-using System.Reactive;
 using System.Reactive.Linq;
-using System.Linq;
+
 
 
 namespace XIVMarketBoard_Api.Controller
@@ -17,17 +14,17 @@ namespace XIVMarketBoard_Api.Controller
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(int itemId, int worldId);
         Task<UniversalisEntry?> GetLatestUniversalisQueryForItem(string itemName, string worldName);
 
-        Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> qList);
+        Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> entryList);
         Task<IEnumerable<UniversalisEntry?>> GetLatestUniversalisQueryForItems(IEnumerable<string> itemNames, string worldName);
         Task<IEnumerable<UniversalisEntry>> GetLatestUniversalisQueryForItems(List<Item> itemList, World world);
     }
 
     public class MarketBoardController : IMarketBoardController
     {
-        private List<MbPost> currentPosts;
-        private List<UniversalisEntry> currentEntries;
-        private List<Item> currentItems;
-        private List<World> currentWorlds;
+        private List<MbPost> currentPosts = new List<MbPost>();
+        private List<UniversalisEntry> currentEntries = new List<UniversalisEntry>();
+        private List<Item> currentItems = new List<Item>();
+        private List<World> currentWorlds = new List<World>();
         private readonly XivDbContext _xivContext;
         public MarketBoardController(XivDbContext xivContext)
         {
@@ -83,7 +80,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 if (entry.Item is null)
                 {
-                    throw new ArgumentNullException(nameof(entry.Item), "Item Id is null");
+                    throw new AppException("Item Id is null when creating universalis query " + JsonConvert.SerializeObject(entry));
                 }
                 var universlisEntry = currentEntries.FirstOrDefault(r =>
                         r.Item.Id == entry.Item.Id &&
@@ -112,7 +109,6 @@ namespace XIVMarketBoard_Api.Controller
         }
         public UniversalisEntry SetUniversalisVariables(UniversalisEntry entry)
         {
-            var resultList = new List<MbPost>();
             var tempList = new List<MbPost>();
             foreach (var p in entry.Posts)
             {

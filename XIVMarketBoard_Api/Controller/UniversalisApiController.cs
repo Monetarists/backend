@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using XIVMarketBoard_Api.Repositories;
 using XIVMarketBoard_Api.Repositories.Models.Universalis;
 using XIVMarketBoard_Api.Events;
-using System;
+using XIVMarketBoard_Api.Helpers;
 using Coravel.Queuing.Interfaces;
 
 namespace XIVMarketBoard_Api.Controller
@@ -58,7 +58,8 @@ namespace XIVMarketBoard_Api.Controller
             if (response.IsSuccessStatusCode)
             {
 
-                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ?? throw new ArgumentNullException(nameof(response.Content), "response from universalis is null");
+                var parsedResult = JsonConvert.DeserializeObject<UniversalisResponseItems>(await response.Content.ReadAsStringAsync()) ??
+                    throw new AppException("response from universalis is null " + item.Id + " " + item.Name_en);
 
                 var uniEntry = CreateUniversalisEntry(parsedResult, world, item);
                 var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(new List<UniversalisEntry>() { uniEntry });
