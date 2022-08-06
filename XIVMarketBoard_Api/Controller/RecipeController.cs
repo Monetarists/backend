@@ -145,11 +145,14 @@ namespace XIVMarketBoard_Api.Controller
         private Item setItemVariables(Item item)
         {
             var tempItem = currentItems.FirstOrDefault(i => i.Id == item.Id) ?? item;
-            tempItem.IsMarketable = item.IsMarketable ?? false;
+
+
             tempItem.Name_en = item.Name_en;
             tempItem.Name_de = item.Name_de;
             tempItem.Name_fr = item.Name_fr;
             tempItem.Name_ja = item.Name_ja;
+            if (!tempItem.CanBeCrafted.HasValue) { tempItem.CanBeCrafted = false; }
+            tempItem.IsMarketable = item.IsMarketable ?? false;
             tempItem.ItemUICategory = currentItemUcs.FirstOrDefault(i => i.Id == item.ItemUICategory.Id) ?? item.ItemUICategory;
             if (item.ItemSearchCategory != null && item.ItemSearchCategory.Id != 0)
             {

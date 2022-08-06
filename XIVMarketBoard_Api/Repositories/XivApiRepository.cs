@@ -42,25 +42,24 @@ namespace XIVMarketBoard_Api.Repositories
         {
 
             var response = await SendRequestAsync(
-                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search");
+                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
             return response;
 
         }
 
         public async Task<HttpResponseMessage> GetAllWorldsAsync()
         {
-            return await SendRequestAsync("", "world?limit=3000");
+            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
         public async Task<HttpResponseMessage> GetWorldDetailsAsync(int Id)
         {
-            return await SendRequestAsync("", "world/" + Id);
+            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
 
         private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
         {
 
             HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
-            client.DefaultRequestHeaders.Add("private_key", configuration.GetSection("ApiKey:XivApiKey").Value);
             var content = new StringContent(body, Encoding.UTF8, "application/json");
             rM.Content = content;
             var result = await client.SendAsync(rM);

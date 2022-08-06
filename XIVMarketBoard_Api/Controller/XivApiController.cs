@@ -35,19 +35,20 @@ namespace XIVMarketBoard_Api.Controller
             var response = await _xivApiRepository.GetAllWorldsAsync();
             if (!response.IsSuccessStatusCode)
             {
-                return response.StatusCode + " " + await response.Content.ReadAsStringAsync();
+                throw new HttpListenerException((int)response.StatusCode, "xivApi returned an error code");
             }
 
             var responseResult = JsonConvert.DeserializeObject<XivApiResponeResults>(await response.Content.ReadAsStringAsync());
             if (responseResult == null) { throw new ArgumentNullException(nameof(responseResult), "JsonConvert returned null object"); }
             foreach (var server in responseResult.Results)
             {
-                if (server.Name_en != "")
+                if (server.Name != "")
                 {
                     var responseWd = await _xivApiRepository.GetWorldDetailsAsync(server.Id);
                     if (!responseWd.IsSuccessStatusCode)
                     {
-                        throw new HttpListenerException((int)responseWd.StatusCode, "xivApi returned an error code");
+                        var a = JsonConvert.DeserializeObject(await responseWd.Content.ReadAsStringAsync());
+                        throw new HttpListenerException((int)responseWd.StatusCode, "xivApi returned an error code " + JsonConvert.DeserializeObject(await responseWd.Content.ReadAsStringAsync()));
                     }
                     var apiResponse = JsonConvert.DeserializeObject<XivApiWorldDetailResult>(await responseWd.Content.ReadAsStringAsync());
                     if (apiResponse is null)
@@ -55,7 +56,7 @@ namespace XIVMarketBoard_Api.Controller
                         throw new JsonException("JsonConvert returned null object");
                     }
                     setVariables(apiResponse);
-                    await Task.Delay(100);
+                    await Task.Delay(50);
                 }
 
             }

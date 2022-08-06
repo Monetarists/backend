@@ -132,8 +132,8 @@ namespace XIVMarketBoard_Api.Controller
                  MaxPriceHQ = responseItem.maxPriceHQ,
                  NqListingsCount = responseItem.listings.Count(x => !x.hq),
                  HqListingsCount = responseItem.listings.Count(x => x.hq),
-                 NqSaleCount = responseItem.recentHistory.Count(x => !x.hq),
-                 HqSaleCount = responseItem.recentHistory.Count(x => x.hq),
+                 NqSaleCount = responseItem.recentHistory.Where(s => _universalisApiRepository.UnixTimeStampToDateTimeSeconds(s.timestamp) > DateTime.UtcNow.AddDays(-1)).Count(s => !s.hq),
+                 HqSaleCount = responseItem.recentHistory.Where(s => _universalisApiRepository.UnixTimeStampToDateTimeSeconds(s.timestamp) > DateTime.UtcNow.AddDays(-1)).Count(s => s.hq)
 
              };
 
