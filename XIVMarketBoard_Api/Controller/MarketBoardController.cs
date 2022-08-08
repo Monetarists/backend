@@ -109,14 +109,14 @@ namespace XIVMarketBoard_Api.Controller
         }
         public UniversalisEntry SetUniversalisVariables(UniversalisEntry entry)
         {
-            var tempList = new List<MbPost>();
+            /*var tempList = new List<MbPost>();
             foreach (var p in entry.Posts)
             {
                 tempList.Add(currentPosts.FirstOrDefault(r => r.Id == p.Id) ?? p);
 
                 if (!currentPosts.Contains(p)) { currentPosts.Add(p); }
-            }
-            entry.Posts = tempList;
+            }*/
+            //entry.Posts = tempList;'
             entry.Item = currentItems.FirstOrDefault(r => r.Id == entry.Item.Id) ?? entry.Item;
             entry.World = currentWorlds.FirstOrDefault(r => r.Id == entry.World.Id) ?? entry.World;
             if (!currentItems.Contains(entry.Item)) { currentItems.Add(entry.Item); }

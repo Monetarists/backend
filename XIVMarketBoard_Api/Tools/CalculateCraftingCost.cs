@@ -37,7 +37,7 @@ namespace XIVMarketBoard_Api.Tools
                 }
                 resultUniversalisList.Add(query);
             }
-            if (queryList.Any())
+            if (queryList.Where(x => x.IsMarketable ?? false).Any())
             {
                 resultUniversalisList.AddRange(
                     await _universalisController.ImportUniversalisDataForItemListAndWorld(queryList.Where(x => x.IsMarketable ?? false).ToList(), world));
