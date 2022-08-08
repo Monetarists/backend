@@ -143,7 +143,7 @@ namespace XIVMarketBoard_Api.Controller
 
             listings.Select(i => new MbPost()
             {
-                Id = i.listingID ?? Guid.NewGuid().ToString(),
+                //Id = i.listingID ?? Guid.NewGuid().ToString(),
                 RetainerName = i.retainerName,
                 SellerId = i.sellerID,
                 Price = i.pricePerUnit,
