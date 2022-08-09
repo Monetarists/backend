@@ -71,16 +71,95 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<bool?>("CanBeCrafted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("CanBeHq")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<bool?>("IsMarketable")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Name")
+                    b.Property<int?>("ItemSearchCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ItemUICategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name_de")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_fr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_ja")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ItemSearchCategoryId");
+
+                    b.HasIndex("ItemUICategoryId");
+
                     b.ToTable("Items");
+                });
+
+            modelBuilder.Entity("XIVMarketBoard_Api.Entities.ItemSearchCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name_de")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_fr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_ja")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ItemSearchCategory");
+                });
+
+            modelBuilder.Entity("XIVMarketBoard_Api.Entities.ItemUICategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name_de")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_fr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_ja")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ItemUICategory");
                 });
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Job", b =>
@@ -89,7 +168,29 @@ namespace XIVMarketBoard_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Abbreviation")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("ClassJobCategoryTargetID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DohDolJobIndex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name_de")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_fr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_ja")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -105,9 +206,9 @@ namespace XIVMarketBoard_Api.Migrations
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.MbPost", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("int");
 
                     b.Property<int>("Amount")
                         .HasColumnType("int");
@@ -161,21 +262,39 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<int>("AmountResult")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsExpert")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsSpecializationRequired")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("ItemId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<int>("JobId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name_de")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("jobId")
-                        .HasColumnType("int");
+                    b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_fr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name_ja")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
 
-                    b.HasIndex("jobId");
+                    b.HasIndex("JobId");
 
                     b.ToTable("Recipes");
                 });
@@ -263,6 +382,12 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Property<double>("CurrentAveragePrinceNQ")
                         .HasColumnType("double");
 
+                    b.Property<int?>("HqListingsCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HqSaleCount")
+                        .HasColumnType("int");
+
                     b.Property<double>("HqSaleVelocity")
                         .HasColumnType("double");
 
@@ -289,6 +414,12 @@ namespace XIVMarketBoard_Api.Migrations
 
                     b.Property<double>("MinPriceNQ")
                         .HasColumnType("double");
+
+                    b.Property<int?>("NqListingsCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NqSaleCount")
+                        .HasColumnType("int");
 
                     b.Property<double>("NqSaleVelocity")
                         .HasColumnType("double");
@@ -378,6 +509,23 @@ namespace XIVMarketBoard_Api.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("XIVMarketBoard_Api.Entities.Item", b =>
+                {
+                    b.HasOne("XIVMarketBoard_Api.Entities.ItemSearchCategory", "ItemSearchCategory")
+                        .WithMany()
+                        .HasForeignKey("ItemSearchCategoryId");
+
+                    b.HasOne("XIVMarketBoard_Api.Entities.ItemUICategory", "ItemUICategory")
+                        .WithMany()
+                        .HasForeignKey("ItemUICategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ItemSearchCategory");
+
+                    b.Navigation("ItemUICategory");
+                });
+
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Job", b =>
                 {
                     b.HasOne("XIVMarketBoard_Api.Entities.User", null)
@@ -412,15 +560,15 @@ namespace XIVMarketBoard_Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XIVMarketBoard_Api.Entities.Job", "job")
+                    b.HasOne("XIVMarketBoard_Api.Entities.Job", "Job")
                         .WithMany()
-                        .HasForeignKey("jobId")
+                        .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Item");
 
-                    b.Navigation("job");
+                    b.Navigation("Job");
                 });
 
             modelBuilder.Entity("XIVMarketBoard_Api.Entities.Retainer", b =>

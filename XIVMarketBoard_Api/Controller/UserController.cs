@@ -25,7 +25,7 @@ namespace XIVMarketBoard_Api.Controller
     public class UserController : IUserController
     {
         private readonly XivDbContext _xivContext;
-        private IJwtUtils _jwtUtils;
+        private readonly IJwtUtils _jwtUtils;
         private readonly IMapper _mapper;
 
         public UserController(

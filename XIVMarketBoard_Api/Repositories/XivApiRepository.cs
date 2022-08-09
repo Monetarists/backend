@@ -1,14 +1,14 @@
-﻿using XIVMarketBoard_Api.Entities;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Text;
-using XIVMarketBoard_Api.Data;
-using System;
-using Microsoft.EntityFrameworkCore;
+
+using Microsoft.Extensions.Configuration;
 
 namespace XIVMarketBoard_Api.Repositories
 {
+
     public interface IXivApiRepository
     {
+
         Task<HttpResponseMessage> GetAllWorldsAsync();
         Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems);
         Task<HttpResponseMessage> GetRecipesAsync(int start, int amount);
@@ -18,23 +18,22 @@ namespace XIVMarketBoard_Api.Repositories
     public class XivApiRepository : IXivApiRepository
     {
         private const string baseAddress = "https://xivapi.com/";
-
-        private const string stringstring = @"""body"": {""query"": {""bool"": {""must"": [{""wildcard"": {""Name_en"": ""*""}}]}}";
-        private const string recipeColumns = "ID,ClassJob.Name_en,ClassJob.Abbreviation_en,ClassJob.ID,Name,UrlType,AmountResult," +
-            "AmountIngredient0,AmountIngredient1,AmountIngredient2,AmountIngredient3,AmountIngredient4,AmountIngredient5," +
-            "AmountIngredient6,AmountIngredient7,AmountIngredient8,AmountIngredient9,ItemIngredient0.Name,ItemIngredient0.ID,ItemIngredient1.Name,ItemIngredient1.ID," +
-            "ItemIngredient2.Name,ItemIngredient2.ID,ItemIngredient3.Name,ItemIngredient3.ID,ItemIngredient4.Name,ItemIngredient4.ID," +
-            "ItemIngredient5.Name,ItemIngredient5.ID,ItemIngredient6.Name,ItemIngredient6.ID,ItemIngredient7.Name,ItemIngredient7.ID," +
-            "ItemIngredient8.Name,ItemIngredient8.ID,ItemIngredient9.Name,ItemIngredient9.ID,ItemResult.ID,ItemResult.Name,ItemResult.AlwaysCollectable";
-        private const string apikey = Credentials.XIVApiKey;
+        private readonly IConfiguration configuration;
 
         private static readonly HttpClient client = new HttpClient();
+
+        public XivApiRepository(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+
+
+        }
 
 
         public async Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems)
         {
 
-            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", recipeColumns), "search");
+            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", getRecipeColumns()), "search");
 
             return response;
 
@@ -43,23 +42,32 @@ namespace XIVMarketBoard_Api.Repositories
         {
 
             var response = await SendRequestAsync(
-                 BuildJsonRequestString(start, amount, "recipe", recipeColumns), "search");
+                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
             return response;
 
         }
 
         public async Task<HttpResponseMessage> GetAllWorldsAsync()
         {
-            return await SendRequestAsync("", "world?limit=3000");
+            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
         public async Task<HttpResponseMessage> GetWorldDetailsAsync(int Id)
         {
-            return await SendRequestAsync("", "world/" + Id);
+            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
 
+        private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
+        {
 
+            HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            rM.Content = content;
+            var result = await client.SendAsync(rM);
+            Console.Write(result);
+            return result;
+        }
 
-        private string BuildJsonRequestString(int from, int size, string index, string columns)
+        private static string BuildJsonRequestString(int from, int size, string index, string columns)
         {
             var anonObj = new
             {
@@ -80,27 +88,28 @@ namespace XIVMarketBoard_Api.Repositories
             };
             return JsonConvert.SerializeObject(anonObj);
         }
-        private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
+        private static string getRecipeColumns()
         {
+            StringBuilder bld = new StringBuilder();
+            bld.Append("ID,Name_de,Name_en,Name_fr,Name_ja,IconID,AmountResult,IsExpert,IsSpecializationRequired" +
+                ",ClassJob.ID,ClassJob.Abbreviation,ClassJob.Name_de,ClassJob.Name_en,ClassJob.Name_fr,ClassJob.Name_ja" +
+                ",ClassJob.Icon,ClassJob.ClassJobCategoryTargetID,ClassJob.DohDolJobIndex" +
+                ",ItemResult.ID,ItemResult.Name_de,ItemResult.Name_en,ItemResult.Name_fr,ItemResult.Name_ja,ItemResult.IconID,ItemResult.IsUntradable,ItemResult.CanBeHq" +
+                ",ItemResult.ItemSearchCategory.ID,ItemResult.ItemSearchCategory.Name_de,ItemResult.ItemSearchCategory.Name_en,ItemResult.ItemSearchCategory.Name_fr,ItemResult.ItemSearchCategory.Name_ja" +
+                ",ItemResult.ItemUICategory.ID,ItemResult.ItemUICategory.Name_de,ItemResult.ItemUICategory.Name_en,ItemResult.ItemUICategory.Name_fr,ItemResult.ItemUICategory.Name_ja");
+            for (int i = 0; i <= 9; i++)
+            {
+                bld.Append(",AmountIngredient" + i +
+                    ",ItemIngredient" + i + ".ID,ItemIngredient" + i + ".Name_de,ItemIngredient" + i +
+                    ".Name_en,ItemIngredient" + i + ".Name_fr,ItemIngredient" + i + ".Name_ja" +
+                    ",ItemIngredient" + i + ".IconID,ItemIngredient" + i + ".IsUntradable,ItemIngredient" + i + ".CanBeHq" +
+                    ",ItemIngredient" + i + ".ItemSearchCategory.ID,ItemIngredient" + i + ".ItemSearchCategory.Name_de,ItemIngredient" + i +
+                    ".ItemSearchCategory.Name_en,ItemIngredient" + i + ".ItemSearchCategory.Name_fr,ItemIngredient" + i + ".ItemSearchCategory.Name_ja" +
+                    ",ItemIngredient" + i + ".ItemUICategory.ID,ItemIngredient" + i + ".ItemUICategory.Name_de,ItemIngredient" + i +
+                    ".ItemUICategory.Name_en,ItemIngredient" + i + ".ItemUICategory.Name_fr,ItemIngredient" + i + ".ItemUICategory.Name_ja");
 
-            HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
-            client.DefaultRequestHeaders.Add("private_key", apikey);
-            var content = new StringContent(body, Encoding.UTF8, "application/json");
-            rM.Content = content;
-            var result = await client.SendAsync(rM);
-            Console.Write(result);
-            return result;
-        }
-        private HttpResponseMessage SendRequest(string body, string endpoint)
-        {
-            HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
-            client.DefaultRequestHeaders.Add("private_key", apikey);
-            var content = new StringContent(body, Encoding.UTF8, "application/json");
-            rM.Content = content;
-            var result = client.Send(rM);
-            Console.Write(result);
-            return result;
-
+            }
+            return bld.ToString();
         }
     }
 }
