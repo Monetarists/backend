@@ -39,7 +39,7 @@ namespace XIVMarketBoard_Api.Controller
     {
         private List<Item> currentItems = new List<Item>();
         private List<Recipe> currentRecipes = new List<Recipe>();
-        private List<Job> currentJobs = new List<Job>();
+        private List<ClassJob> currentJobs = new List<ClassJob>();
         private List<ItemSearchCategory> currentItemScs = new List<ItemSearchCategory>();
         private List<ItemUICategory> currentItemUcs = new List<ItemUICategory>();
         private readonly XivDbContext _xivContext;

@@ -18,6 +18,7 @@ using Coravel.Queuing;
 using Coravel;
 using XIVMarketBoard_Api.Events;
 using XIVMarketBoard_Api.Listeners;
+using Nest;
 
 namespace XIVMarketBoard_Api
 {
@@ -73,7 +74,16 @@ namespace XIVMarketBoard_Api
             services.AddTransient<IDataCentreController, DataCentreController>();
             services.AddTransient<IJwtUtils, JwtUtils>();
             services.AddTransient<IMapper, Mapper>();
+            var config = builder.Configuration.GetSection("Elastic");
+            var connectionSettings = new ConnectionSettings(new Uri(config["Host"])).BasicAuthentication(config["UserName"], config["Password"]).EnableApiVersioningHeader();
+            var client = new ElasticClient(connectionSettings);
 
+            services.AddSingleton<IElasticClient>(client);
+            /* var settings = new ElasticsearchClientSettings(new Uri("https://localhost:9200"))
+             .CertificateFingerprint("<FINGERPRINT>")
+             .Authentication(new BasicAuthentication("<USERNAME>", "<PASSWORD>"));
+            var client = new ElasticsearchClient(settings);
+             */
             services.AddDbContext<XivDbContext>(options =>
                 options.UseMySql(
                     builder.Configuration.GetConnectionString("XivDbConnectionString"),

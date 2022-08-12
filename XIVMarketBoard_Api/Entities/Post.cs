@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace XIVMarketBoard_Api.Entities
 {
-    public class MbPost
+    public class Post
     {
 
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]

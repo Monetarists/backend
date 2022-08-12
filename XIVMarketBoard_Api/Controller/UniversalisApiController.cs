@@ -11,7 +11,7 @@ namespace XIVMarketBoard_Api.Controller
 {
     public interface IUniversalisApiController
     {
-        IEnumerable<MbPost> CreateMbPostEntries(IEnumerable<UniversalisListings> listings);
+        IEnumerable<Post> CreateMbPostEntries(IEnumerable<UniversalisListings> listings);
         IEnumerable<SaleHistory> CreateSaleHistoryEntries(IEnumerable<UniversalisRecentHistory> saleHistoryList);
         UniversalisEntry CreateUniversalisEntry(UniversalisResponseItems responseItem, World world, Item item);
         Task<string> ImportUniversalisDataForAllItemsOnWorld(World world);
@@ -139,9 +139,9 @@ namespace XIVMarketBoard_Api.Controller
 
 
 
-        public IEnumerable<MbPost> CreateMbPostEntries(IEnumerable<UniversalisListings> listings) =>
+        public IEnumerable<Post> CreateMbPostEntries(IEnumerable<UniversalisListings> listings) =>
 
-            listings.Select(i => new MbPost()
+            listings.Select(i => new Post()
             {
                 //Id = i.listingID ?? Guid.NewGuid().ToString(),
                 RetainerName = i.retainerName,

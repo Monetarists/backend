@@ -15,7 +15,6 @@ namespace XIVMarketBoard_Api.Controller
     {
         Task<World?> GetWorldFromName(string worldName);
         Task<IEnumerable<DataCenter>> SaveDataCenters(IEnumerable<DataCenter> dcList);
-        Task<IEnumerable<World>> SaveWorlds(IEnumerable<World> worldList);
     }
     public class DataCentreController : IDataCentreController
     {
@@ -42,25 +41,6 @@ namespace XIVMarketBoard_Api.Controller
             return dcList;
 
         }
-        public async Task<IEnumerable<World>> SaveWorlds(IEnumerable<World> worldList)
-        {
 
-            foreach (var world in worldList)
-            {
-                var worldToSave = await _xivContext.Worlds.FirstOrDefaultAsync(r => r.Id == world.Id);
-                var datacenter = await _xivContext.DataCenters.FirstOrDefaultAsync(r => r.Id == world.DataCenter.Id);
-                if (worldToSave == null)
-                {
-                    if (datacenter != null)
-                    {
-                        world.DataCenter = datacenter;
-                    }
-                    _xivContext.Worlds.Add(world);
-                }
-            }
-            await _xivContext.SaveChangesAsync();
-            return worldList;
-
-        }
     }
 }

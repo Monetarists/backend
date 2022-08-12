@@ -21,9 +21,9 @@ namespace XIVMarketBoard_Api.Data
         public DbSet<Recipe> Recipes => Set<Recipe>();
         public DbSet<World> Worlds => Set<World>();
         public DbSet<DataCenter> DataCenters => Set<DataCenter>();
-        public DbSet<Job> Jobs => Set<Job>();
+        public DbSet<ClassJob> Jobs => Set<ClassJob>();
         public DbSet<Retainer> Retainers => Set<Retainer>();
-        public DbSet<MbPost> Posts => Set<MbPost>();
+        public DbSet<Post> Posts => Set<Post>();
         public DbSet<SaleHistory> SaleHistory => Set<SaleHistory>();
         public DbSet<UniversalisEntry> UniversalisEntries => Set<UniversalisEntry>();
         public DbSet<ItemSearchCategory> ItemSearchCategory => Set<ItemSearchCategory>();

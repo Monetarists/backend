@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using XIVMarketBoard_Api.Repositories.Models.ResponseDto;
 using System.Linq;
 using AutoMapper;
-
+using Nest;
 var builder = WebApplication.CreateBuilder(args);
 Builder.ConfigureServices(builder);
 
@@ -17,7 +17,7 @@ var app = Builder.ConfigureWebApp(builder);
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {
-    var req = new AuthenticateRequest(username, password);
+    var req = new AuthRequest(username, password);
     var response = userController.Authenticate(req);
 
     if (response.Token != null)
@@ -279,11 +279,11 @@ app.MapPut("/import/marketboard/{worldName}", async (IUniversalisApiController u
 })
 .WithName("import items for world");
 
-app.MapPut("/import/worlds", async (IXivApiController xivApiController) =>
+app.MapPut("/import/worlds", async (IXivApiController xivApiController, IElasticClient client) =>
 {
     try
     {
-        await xivApiController.ImportWorldsDataCentres();
+        await xivApiController.ImportWorldsDataCenters();
         return Results.Ok("Import successful");
     }
     catch (Exception e)
@@ -309,5 +309,29 @@ app.MapPut("/import/recipes", async (IXivApiController xivApiController, IUniver
 
 })
 .WithName("import all recipes");
+app.MapPut("/create/indices", async (IElasticClient client) =>
+{
+    try
+    {
+
+
+        var createIndexResponse = client.Indices.Create("datacenter", c => c
+            .Map<DataCenter>(m => m
+                .AutoMap<World>())
+        );
+
+
+        return Results.Ok();
+    }
+    catch (Exception e)
+    {
+        return Results.Problem(e.Message, null, 500);
+    }
+
+})
+.WithName("create indices");
+
+
+
 
 app.Run();

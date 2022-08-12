@@ -4,7 +4,7 @@
 
     public class AuthRequest
     {
-        public AuthenticateRequest(string userName, string password)
+        public AuthRequest(string userName, string password)
         {
             UserName = userName;
             Password = password;

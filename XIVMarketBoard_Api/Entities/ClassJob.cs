@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace XIVMarketBoard_Api.Entities
 {
-    public class Job
+    public class ClassJob
     {
         [Key]
         public int Id { get; set; }

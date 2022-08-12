@@ -4,13 +4,14 @@ using System.Net;
 using XIVMarketBoard_Api.Repositories;
 using System.Reactive.Linq;
 using XIVMarketBoard_Api.Repositories.Models.XivApi;
+using Nest;
 
 namespace XIVMarketBoard_Api.Controller
 {
     public interface IXivApiController
     {
         string GetAllRecipies();
-        Task<string> ImportWorldsDataCentres();
+        Task<string> ImportWorldsDataCenters();
         Task<string> ImportRecipiesAndItems();
     }
 
@@ -19,16 +20,19 @@ namespace XIVMarketBoard_Api.Controller
         private readonly IXivApiRepository _xivApiRepository;
         private readonly IDataCentreController _dataCentreController;
         private readonly IRecipeController _recipeController;
+        private readonly IElasticClient _elasticClient;
         private List<World> worldList = new List<World>();
         private List<DataCenter> dataCenterList = new List<DataCenter>();
-        public XivApiController(IXivApiRepository xivApiRepository, IDataCentreController dataCentreController, IRecipeController recipeController)
+        public XivApiController(IXivApiRepository xivApiRepository, IDataCentreController dataCentreController, IRecipeController recipeController, IElasticClient elasticClient)
         {
             _xivApiRepository = xivApiRepository;
             _dataCentreController = dataCentreController;
             _recipeController = recipeController;
+            _elasticClient = elasticClient;
         }
 
-        public async Task<string> ImportWorldsDataCentres()
+
+        public async Task<string> ImportWorldsDataCenters()
         {
             worldList = new List<World>();
             dataCenterList = new List<DataCenter>();
@@ -60,8 +64,9 @@ namespace XIVMarketBoard_Api.Controller
 
             }
 
-            await _dataCentreController.SaveDataCenters(dataCenterList);
-            await _dataCentreController.SaveWorlds(worldList);
+            var indexResponse = await _elasticClient.BulkAsync(b => b.Index("datacenter").IndexMany(dataCenterList));
+            //await _dataCentreController.SaveDataCenters(dataCenterList);
+            //await _dataCentreController.SaveWorlds(worldList);
             return "import of worlds successful";
         }
         public void setVariables(XivApiWorldDetailResult apiResponse)
@@ -81,7 +86,8 @@ namespace XIVMarketBoard_Api.Controller
                 var world = new World();
                 world.Id = apiResponse.Id;
                 world.Name = apiResponse.Name;
-                world.DataCenter = dcEntity;
+                //world.DataCenter = dcEntity;
+                dcEntity.Worlds.Add(world);
                 worldList.Add(world);
             }
         }
@@ -130,7 +136,7 @@ namespace XIVMarketBoard_Api.Controller
             resultList.Select(r => new Recipe
             {
                 Ingredients = CreateIngredientList(r).ToList(),
-                Job = new Job
+                Job = new ClassJob
                 {
                     Id = r.ClassJob.Id,
                     Name_en = r.ClassJob.Name_en,

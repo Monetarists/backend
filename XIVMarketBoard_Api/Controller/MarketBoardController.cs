@@ -21,7 +21,7 @@ namespace XIVMarketBoard_Api.Controller
 
     public class MarketBoardController : IMarketBoardController
     {
-        private List<MbPost> currentPosts = new List<MbPost>();
+        private List<Post> currentPosts = new List<Post>();
         private List<UniversalisEntry> currentEntries = new List<UniversalisEntry>();
         private List<Item> currentItems = new List<Item>();
         private List<World> currentWorlds = new List<World>();

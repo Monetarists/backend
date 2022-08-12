@@ -10,7 +10,7 @@ namespace XIVMarketBoard_Api.Entities
         public World World { get; set; } = new World();
         public DateTime LastUploadDate { get; set; }
         public DateTime QueryDate { get; set; }
-        public virtual ICollection<MbPost> Posts { get; set; } = new List<MbPost>();
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
         public virtual ICollection<SaleHistory> SaleHistory { get; set; } = new List<SaleHistory>();
         public double CurrentAveragePrice { get; set; }
         public double CurrentAveragePrinceNQ { get; set; }

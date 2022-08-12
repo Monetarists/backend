@@ -19,7 +19,7 @@ namespace XIVMarketBoard_Api.Helpers
 
             CreateMap<Item, ResponseItem>();
 
-            CreateMap<Job, ResponseJob>();
+            CreateMap<ClassJob, ResponseJob>();
 
             CreateMap<Recipe, ResponseRecipe>();
 
@@ -27,7 +27,7 @@ namespace XIVMarketBoard_Api.Helpers
 
             CreateMap<SaleHistory, ResponseUniversalisHistory>();
 
-            CreateMap<MbPost, ResponseUniversalisPost>();
+            CreateMap<Post, ResponseUniversalisPost>();
 
 
             // UpdateRequest -> User
