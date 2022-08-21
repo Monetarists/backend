@@ -158,9 +158,13 @@ namespace XIVMarketBoard_Api.Controller
             {
                 tempItem.ItemSearchCategory = currentItemScs.FirstOrDefault(i => i.Id == item.ItemSearchCategory.Id) ?? item.ItemSearchCategory;
             }
+            else
+            {
+                item.ItemSearchCategory = null;
+            }
 
-            if (tempItem.ItemSearchCategory != null && !currentItemScs.Contains(tempItem.ItemSearchCategory)) { currentItemScs.Add(tempItem.ItemSearchCategory); }
-            if (!currentItemUcs.Contains(tempItem.ItemUICategory)) { currentItemUcs.Add(tempItem.ItemUICategory); }
+            if (tempItem.ItemSearchCategory != null && tempItem.ItemSearchCategory.Id != 0 && !currentItemScs.Select(x => x.Id).ToList().Contains(tempItem.ItemSearchCategory.Id)) { currentItemScs.Add(tempItem.ItemSearchCategory); }
+            if (!currentItemUcs.Select(x => x.Id).ToList().Contains(tempItem.ItemUICategory.Id) && tempItem.ItemUICategory.Id != 0) { currentItemUcs.Add(tempItem.ItemUICategory); }
             if (!currentItems.Contains(tempItem)) { currentItems.Add(tempItem); }
             return tempItem;
         }
@@ -177,8 +181,8 @@ namespace XIVMarketBoard_Api.Controller
             tempRecipe.IsSpecializationRequired = recipe.IsSpecializationRequired;
             tempRecipe.Job = currentJobs.FirstOrDefault(j => j.Id == recipe.Job.Id) ?? recipe.Job;
 
-            if (tempRecipe.Item.ItemSearchCategory != null && !currentItemScs.Contains(tempRecipe.Item.ItemSearchCategory)) { currentItemScs.Add(tempRecipe.Item.ItemSearchCategory); }
-            if (!currentItemUcs.Contains(tempRecipe.Item.ItemUICategory)) { currentItemUcs.Add(tempRecipe.Item.ItemUICategory); }
+            if (tempRecipe.Item.ItemSearchCategory != null && tempRecipe.Item.ItemSearchCategory.Id != 0 && !currentItemScs.Select(x => x.Id).ToList().Contains(tempRecipe.Item.ItemSearchCategory.Id)) { currentItemScs.Add(tempRecipe.Item.ItemSearchCategory); }
+            if (!currentItemUcs.Select(x => x.Id).ToList().Contains(tempRecipe.Item.ItemUICategory.Id) && tempRecipe.Item.ItemUICategory.Id != 0) { currentItemUcs.Add(tempRecipe.Item.ItemUICategory); }
 
             if (!currentJobs.Contains(tempRecipe.Job)) { currentJobs.Add(tempRecipe.Job); }
             return tempRecipe;

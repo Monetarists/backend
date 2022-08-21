@@ -18,7 +18,8 @@ using Coravel.Queuing;
 using Coravel;
 using XIVMarketBoard_Api.Events;
 using XIVMarketBoard_Api.Listeners;
-
+using Npgsql;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 namespace XIVMarketBoard_Api
 {
     public static class Builder
@@ -73,17 +74,11 @@ namespace XIVMarketBoard_Api
             services.AddTransient<IDataCentreController, DataCentreController>();
             services.AddTransient<IJwtUtils, JwtUtils>();
             services.AddTransient<IMapper, Mapper>();
-
             services.AddDbContext<XivDbContext>(options =>
-                options.UseMySql(
-                    builder.Configuration.GetConnectionString("XivDbConnectionString"),
-                    ServerVersion.AutoDetect(
-                        builder.Configuration.GetConnectionString("XivDbConnectionString")
-                    ),
-                    options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
-
+                options.UseNpgsql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
+                options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
                 )
-            );
+        );
 
             services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
             builder.Services.AddAuthorization();
