@@ -11,6 +11,8 @@
         public ResponseUniversalisEntry? UniversalisEntry { get; set; }
         public int AmountResult { get; set; }
         public virtual ICollection<ResponseIngredient>? Ingredients { get; set; }
+        public DateTime OldestUploadDate { get; set; }
+        public DateTime OldestQueryDate { get; set; }
         public virtual ResponseJob? Job { get; set; } = new ResponseJob();
         public bool IsExpert { get; set; }
         public bool IsSpecializationRequired { get; set; }
