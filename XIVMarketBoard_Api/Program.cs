@@ -179,7 +179,7 @@ app.MapGet("/marketboard/{worldName}/{itemName}", async (
         var responseResult = new ResponseResult();
 
         if (result == null ||
-        (DateTime.Now.AddHours(-6) > result.LastUploadDate && DateTime.Now.AddHours(-1) > result.QueryDate))
+        (DateTime.UtcNow.AddHours(-6) > result.LastUploadDate && DateTime.UtcNow.AddHours(-1) > result.QueryDate))
         {
             var updatedEntry = await universalisController.ImportUniversalisDataForItemAndWorld(item, world);
             if (updatedEntry is null) return Results.NotFound("Universalis returned no entries for item");
@@ -213,7 +213,7 @@ app.MapGet("/marketboard/{worldName}", async (IDataCentreController dataCentreCo
         var resultList = await marketboardController.GetLatestUniversalisQueryForItems(itemNames.Take(10), worldName);
         foreach (var entry in resultList)
         {
-            if (entry != null && DateTime.Now.AddHours(-6) > entry.LastUploadDate && DateTime.Now.AddMinutes(-30) > entry.QueryDate)
+            if (entry != null && DateTime.UtcNow.AddHours(-6) > entry.LastUploadDate && DateTime.UtcNow.AddMinutes(-30) > entry.QueryDate)
             {
                 outdatedList.Add(entry.Item);
             }

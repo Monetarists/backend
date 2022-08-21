@@ -39,14 +39,14 @@ namespace XIVMarketBoard_Api.Repositories
         {
             // Unix timestamp is seconds past epoch
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+            dateTime = dateTime.AddMilliseconds(unixTimeStamp);
             return dateTime;
         }
         public DateTime UnixTimeStampToDateTimeSeconds(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            dateTime = dateTime.AddSeconds(unixTimeStamp);
             return dateTime;
         }
         private async Task<HttpResponseMessage> SendRequestAsync(string endpoint)
