@@ -92,9 +92,10 @@ namespace XIVMarketBoard_Api.Controller
                 await Task.Delay(80);
 
             }
-
-            var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
-            return resultList;
+            var evt = new SaveMarketBoardDataRequest { UniversalisEntries = uniList };
+            _queue.QueueBroadcast(evt);
+            //var resultList = await _marketBoardApiController.GetOrCreateUniversalisQueries(uniList);
+            return uniList;
         }
 
         public async Task<string> ImportUniversalisDataForAllItemsOnWorld(World world)
