@@ -21,7 +21,6 @@ namespace XIVMarketBoard_Api.Controller
 
     public class MarketBoardController : IMarketBoardController
     {
-        private List<MbPost> currentPosts = new List<MbPost>();
         private List<UniversalisEntry> currentEntries = new List<UniversalisEntry>();
         private List<Item> currentItems = new List<Item>();
         private List<World> currentWorlds = new List<World>();
@@ -68,7 +67,6 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<IEnumerable<UniversalisEntry>> GetOrCreateUniversalisQueries(List<UniversalisEntry> entryList)
         {
 
-            currentPosts = _xivContext.Posts.ToList();
             currentEntries = _xivContext.UniversalisEntries.ToList();
             currentItems = _xivContext.Items.ToList();
             currentWorlds = _xivContext.Worlds.ToList();
@@ -109,14 +107,6 @@ namespace XIVMarketBoard_Api.Controller
         }
         public UniversalisEntry SetUniversalisVariables(UniversalisEntry entry)
         {
-            /*var tempList = new List<MbPost>();
-            foreach (var p in entry.Posts)
-            {
-                tempList.Add(currentPosts.FirstOrDefault(r => r.Id == p.Id) ?? p);
-
-                if (!currentPosts.Contains(p)) { currentPosts.Add(p); }
-            }*/
-            //entry.Posts = tempList;'
             entry.Item = currentItems.FirstOrDefault(r => r.Id == entry.Item.Id) ?? entry.Item;
             entry.World = currentWorlds.FirstOrDefault(r => r.Id == entry.World.Id) ?? entry.World;
             if (!currentItems.Contains(entry.Item)) { currentItems.Add(entry.Item); }
