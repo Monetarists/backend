@@ -60,9 +60,12 @@ namespace XIVMarketBoard_Api.Tools
         public ResponseRecipe MapCraftingCostResult(List<UniversalisEntry> universalisEntries, double craftingCost, Recipe recipe)
         {
 
-
+            var mostOutdatedEntry = universalisEntries.OrderByDescending(x => x.LastUploadDate).First();
             var returnResult = _mapper.Map(recipe, new ResponseRecipe());
+
             returnResult.UniversalisEntry = _mapper.Map(universalisEntries.First(x => x.Item.Id == recipe.Item.Id), new ResponseUniversalisEntry());
+            returnResult.OldestUploadDate = mostOutdatedEntry.LastUploadDate;
+            returnResult.OldestQueryDate = mostOutdatedEntry.QueryDate;
             returnResult.Job = null;
             returnResult.Ingredients = null;
             returnResult.UniversalisEntry.Posts = null;
