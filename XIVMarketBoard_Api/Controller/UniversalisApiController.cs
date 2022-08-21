@@ -112,7 +112,7 @@ namespace XIVMarketBoard_Api.Controller
                  Item = item,
                  World = world,
                  LastUploadDate = _universalisApiRepository.UnixTimeStampToDateTimeMilliSeconds(responseItem.lastUploadTime),
-                 QueryDate = DateTime.Now,
+                 QueryDate = DateTime.UtcNow,
                  Posts = CreateMbPostEntries(responseItem.listings).ToList(), // list listings
                  SaleHistory = CreateSaleHistoryEntries(responseItem.recentHistory).ToList(), //list recentHistory
                  CurrentAveragePrice = responseItem.currentAveragePrice,

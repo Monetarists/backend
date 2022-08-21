@@ -29,8 +29,8 @@ namespace XIVMarketBoard_Api.Tools
             var resultUniversalisList = new List<UniversalisEntry>();
             foreach (var query in universalisList)
             {
-                if (DateTime.Now.AddHours(-6) > query.LastUploadDate &&
-                   DateTime.Now.AddHours(-1) > query.QueryDate)
+                if (DateTime.UtcNow.AddHours(-6) > query.LastUploadDate &&
+                   DateTime.UtcNow.AddHours(-1) > query.QueryDate)
                 {
                     queryList.Add(query.Item);
                     continue;
