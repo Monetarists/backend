@@ -51,7 +51,7 @@ namespace XIVMarketBoard_Api.Tools
                     r.Item.Id == x.Item.Id).ToList();
                 var craftingCost = tempUniversalisEntries
                     .Where(x => x.Item.Id != r.Item.Id)
-                    .Sum(x => x.MinPrice);
+                    .Sum(x => x.MinPrice * r.Ingredients.First(y => y.Item.Id == x.Item.Id).Amount);
                 returnList.Add(MapCraftingCostResult(tempUniversalisEntries.ToList(), craftingCost, r));
             }
 
@@ -74,11 +74,7 @@ namespace XIVMarketBoard_Api.Tools
                 returnResult.UniversalisEntry.CraftingCost = 0;
                 return returnResult;
             }
-            returnResult.UniversalisEntry.CraftingCost = universalisEntries
-                .Where(x => recipe.Ingredients
-                    .Select(i => i.Item.Id)
-                    .Contains(x.Item.Id))
-                .Sum(x => x.MinPrice);
+            returnResult.UniversalisEntry.CraftingCost = craftingCost;
 
 
             return returnResult;
