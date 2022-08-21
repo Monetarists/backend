@@ -29,6 +29,9 @@ namespace XIVMarketBoard_Api.Helpers
 
             CreateMap<MbPost, ResponseUniversalisPost>();
 
+            CreateMap<ItemSearchCategory, ResponseItemCategory>();
+
+            CreateMap<ItemUICategory, ResponseItemCategory>();
 
             // UpdateRequest -> User
             CreateMap<UpdateRequest, User>()
