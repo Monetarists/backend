@@ -62,14 +62,23 @@ namespace XIVMarketBoard_Api.Tools
 
             var mostOutdatedEntry = universalisEntries.OrderByDescending(x => x.LastUploadDate).First();
             var returnResult = _mapper.Map(recipe, new ResponseRecipe());
-
-            returnResult.UniversalisEntry = _mapper.Map(universalisEntries.First(x => x.Item.Id == recipe.Item.Id), new ResponseUniversalisEntry());
-            returnResult.OldestUploadDate = mostOutdatedEntry.LastUploadDate;
-            returnResult.OldestQueryDate = mostOutdatedEntry.QueryDate;
             returnResult.Job = null;
             returnResult.Ingredients = null;
+            var resultingItem = universalisEntries.FirstOrDefault(x => x.Item.Id == recipe.Item.Id);
+            //if universalis returns no data return error mess
+            if (resultingItem == null)
+            {
+                returnResult.UniversalisEntry = new ResponseUniversalisEntry();
+                returnResult.UniversalisEntry.Message = "no data";
+                return returnResult;
+            }
+
+            returnResult.UniversalisEntry = _mapper.Map(resultingItem, new ResponseUniversalisEntry());
             returnResult.UniversalisEntry.Posts = null;
             returnResult.UniversalisEntry.SaleHistory = null;
+            returnResult.OldestUploadDate = mostOutdatedEntry.LastUploadDate;
+            returnResult.OldestQueryDate = mostOutdatedEntry.QueryDate;
+
 
             if (universalisEntries.Any(x => x.Item.Id != recipe.Item.Id && x.MinPrice == 0))
             {
