@@ -9,11 +9,21 @@ using Microsoft.AspNetCore.Authorization;
 using XIVMarketBoard_Api.Repositories.Models.ResponseDto;
 using System.Linq;
 using AutoMapper;
+using XIVMarketBoard_Api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 Builder.ConfigureServices(builder);
 
 var app = Builder.ConfigureWebApp(builder);
+
+app.MapGet("/test", async (IXivApiRepository IXivApiRepository) =>
+{
+    var a = "";
+
+    a = await IXivApiRepository.testsemaphore();
+
+})
+.WithName("test");
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 
 namespace XIVMarketBoard_Api.Repositories
@@ -13,6 +13,7 @@ namespace XIVMarketBoard_Api.Repositories
         Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems);
         Task<HttpResponseMessage> GetRecipesAsync(int start, int amount);
         Task<HttpResponseMessage> GetWorldDetailsAsync(int Id);
+        Task<string> testsemaphore();
     }
 
     public class XivApiRepository : IXivApiRepository
@@ -33,7 +34,7 @@ namespace XIVMarketBoard_Api.Repositories
         public async Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems)
         {
 
-            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", getRecipeColumns()), "search");
+            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", getRecipeColumns()), "search", _httpClientFactory);
 
             return response;
 
@@ -42,22 +43,26 @@ namespace XIVMarketBoard_Api.Repositories
         {
 
             var response = await SendRequestAsync(
-                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
+                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
             return response;
 
         }
 
         public async Task<HttpResponseMessage> GetAllWorldsAsync()
         {
-            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
+            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
         }
         public async Task<HttpResponseMessage> GetWorldDetailsAsync(int Id)
         {
-            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
+            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
         }
-
-        private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
+        public async Task<string> testsemaphore()
         {
+            return await SendRequestAsyncdothing();
+        }
+        private static async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint, IHttpClientFactory _httpClientFactory)
+        {
+            var semaphore = new SemaphoreSlim(30);
             var client = _httpClientFactory.CreateClient();
             HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
             var content = new StringContent(body, Encoding.UTF8, "application/json");
@@ -66,7 +71,19 @@ namespace XIVMarketBoard_Api.Repositories
             Console.Write(result);
             return result;
         }
+        private static async Task<string> SendRequestAsyncdothing()
+        {
+            Debug.WriteLine("starting");
+            var semaphore = new SemaphoreSlim(5);
 
+            await semaphore.WaitAsync();
+            Debug.WriteLine("entered");
+            Thread.Sleep(10000);
+            Debug.WriteLine("exit");
+            semaphore.Release();
+            return "abc";
+
+        }
         private static string BuildJsonRequestString(int from, int size, string index, string columns)
         {
             var anonObj = new
