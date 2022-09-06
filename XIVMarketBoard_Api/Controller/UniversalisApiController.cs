@@ -93,7 +93,7 @@ namespace XIVMarketBoard_Api.Controller
 
                 uniList.AddRange(parsedResult.items.Select(i => CreateUniversalisEntry(i, world, itemColl.FirstOrDefault(r => r.Id.ToString() == i.itemId) ?? throw new Exception("item is null"))));
                 //wait for api ratelimiting
-                await Task.Delay(80);
+                //await Task.Delay(80);
 
             }
             var evt = new SaveMarketBoardDataRequest { UniversalisEntries = uniList };

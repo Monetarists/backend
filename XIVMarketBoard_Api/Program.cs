@@ -16,14 +16,6 @@ Builder.ConfigureServices(builder);
 
 var app = Builder.ConfigureWebApp(builder);
 
-app.MapGet("/test", async (IXivApiRepository IXivApiRepository) =>
-{
-    var a = "";
-
-    a = await IXivApiRepository.testsemaphore();
-
-})
-.WithName("test");
 
 app.MapGet("/Authenticate", (IUserController userController, string username, string password) =>
 {

@@ -111,7 +111,7 @@ namespace XIVMarketBoard_Api.Controller
                 }
                 resultList.AddRange(responseResults.Results);
                 if (resultsTotal == 0) { resultsTotal = responseResults.Pagination.ResultsTotal; }
-                await Task.Delay(100);
+                //await Task.Delay(100);
 
 
             }

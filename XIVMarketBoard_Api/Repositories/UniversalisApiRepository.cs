@@ -1,5 +1,5 @@
-﻿using System.Threading;
-
+﻿using Esendex.TokenBucket;
+using System.Threading;
 namespace XIVMarketBoard_Api.Repositories
 {
     public interface IUniversalisApiRepository
@@ -15,10 +15,24 @@ namespace XIVMarketBoard_Api.Repositories
         //listings = number of current posts
         //entries = number of history
         public const string baseAddress = "https://universalis.app/api/";
-        private static readonly HttpClient client = new HttpClient();
+        //private static readonly HttpClient client = new HttpClient();
         //24h in s
         private static int entriesWithinSeconds = 604800;
         private static int nrOfEntries = 300;
+
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ITokenBucket _bucket;
+        private readonly SemaphoreSlim _semaphore;
+        public UniversalisApiRepository(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+            _bucket = _bucket = TokenBuckets.Construct()
+              .WithCapacity(35)
+              .WithFixedIntervalRefillStrategy(25, TimeSpan.FromSeconds(1))
+              .Build();
+            _semaphore = new SemaphoreSlim(8);
+        }
+
         public async Task<HttpResponseMessage> GetUniversalisEntryForItems(IEnumerable<string> idList, string world)
         {
 
@@ -51,10 +65,17 @@ namespace XIVMarketBoard_Api.Repositories
         }
         private async Task<HttpResponseMessage> SendRequestAsync(string endpoint)
         {
+            while (true)
+            {
+                var client = _httpClientFactory.CreateClient();
+                HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                _semaphore.Wait();
+                _bucket.Consume(1);
+                var response = await client.SendAsync(rM);
+                _semaphore.Release();
+                return response;
+            }
 
-            HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            var response = await client.SendAsync(rM);
-            return response;
         }
     }
 

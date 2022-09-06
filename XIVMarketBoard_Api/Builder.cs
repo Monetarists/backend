@@ -61,23 +61,27 @@ namespace XIVMarketBoard_Api
             services.AddQueue();
             services.AddEvents();
             services.AddControllers().AddNewtonsoftJson(o => { o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; });
+
+            services.AddTransient<IMapper, Mapper>();
             services.AddAutoMapper(typeof(MapperProfile));
+
             services.AddTransient<SaveMarketBoardDataListener>();
             services.AddTransient<ICalculateCraftingCost, CalculateCraftingCost>();
             services.AddTransient<IUniversalisApiController, UniversalisApiController>();
             services.AddTransient<IXivApiController, XivApiController>();
-            services.AddTransient<IUniversalisApiRepository, UniversalisApiRepository>();
-            services.AddTransient<IXivApiRepository, XivApiRepository>();
             services.AddTransient<IMarketBoardController, MarketBoardController>();
-            services.AddScoped<IUserController, UserController>();
             services.AddTransient<IRecipeController, RecipeController>();
             services.AddTransient<IDataCentreController, DataCentreController>();
             services.AddTransient<IJwtUtils, JwtUtils>();
-            services.AddTransient<IMapper, Mapper>();
+            services.AddScoped<IUserController, UserController>();
+
+            services.AddSingleton<IUniversalisApiRepository, UniversalisApiRepository>();
+            services.AddSingleton<IXivApiRepository, XivApiRepository>();
+
             services.AddHttpClient();
             services.AddDbContext<XivDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
-                options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
+                    options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
                 )
         );
 
@@ -87,6 +91,7 @@ namespace XIVMarketBoard_Api
             {
                 opt.TokenValidationParameters = new()
                 {
+
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,

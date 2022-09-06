@@ -2,7 +2,9 @@
 using System.Text;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
-
+using Polly.RateLimit;
+using Polly;
+using Esendex.TokenBucket;
 namespace XIVMarketBoard_Api.Repositories
 {
 
@@ -13,20 +15,24 @@ namespace XIVMarketBoard_Api.Repositories
         Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems);
         Task<HttpResponseMessage> GetRecipesAsync(int start, int amount);
         Task<HttpResponseMessage> GetWorldDetailsAsync(int Id);
-        Task<string> testsemaphore();
     }
 
     public class XivApiRepository : IXivApiRepository
     {
         private const string baseAddress = "https://xivapi.com/";
         private readonly IConfiguration configuration;
-
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ITokenBucket _bucket;
 
         public XivApiRepository(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             this.configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _bucket = TokenBuckets.Construct()
+              .WithCapacity(30)
+              .WithFixedIntervalRefillStrategy(15, TimeSpan.FromSeconds(1))
+              .Build();
+
         }
 
 
@@ -34,7 +40,7 @@ namespace XIVMarketBoard_Api.Repositories
         public async Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems)
         {
 
-            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", getRecipeColumns()), "search", _httpClientFactory);
+            var response = await SendRequestAsync(BuildJsonRequestString(startNumber, amountOfItems, "items", getRecipeColumns()), "search");
 
             return response;
 
@@ -43,46 +49,34 @@ namespace XIVMarketBoard_Api.Repositories
         {
 
             var response = await SendRequestAsync(
-                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
+                 BuildJsonRequestString(start, amount, "recipe", getRecipeColumns()), "search" + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
             return response;
 
         }
 
         public async Task<HttpResponseMessage> GetAllWorldsAsync()
         {
-            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
+            return await SendRequestAsync("", "world?limit=3000" + "&private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
         public async Task<HttpResponseMessage> GetWorldDetailsAsync(int Id)
         {
-            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value, _httpClientFactory);
+            return await SendRequestAsync("", "world/" + Id + "?private_key=" + configuration.GetSection("ApiKey:XivApiKey").Value);
         }
-        public async Task<string> testsemaphore()
+        private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
         {
-            return await SendRequestAsyncdothing();
-        }
-        private static async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint, IHttpClientFactory _httpClientFactory)
-        {
-            var semaphore = new SemaphoreSlim(30);
+            var semaphore = new SemaphoreSlim(1);
             var client = _httpClientFactory.CreateClient();
             HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
             var content = new StringContent(body, Encoding.UTF8, "application/json");
             rM.Content = content;
-            var result = await client.SendAsync(rM);
-            Console.Write(result);
-            return result;
-        }
-        private static async Task<string> SendRequestAsyncdothing()
-        {
-            Debug.WriteLine("starting");
-            var semaphore = new SemaphoreSlim(5);
+            while (true)
+            {
+                _bucket.Consume(1);
+                var result = await client.SendAsync(rM);
+                return result;
+            }
 
-            await semaphore.WaitAsync();
-            Debug.WriteLine("entered");
-            Thread.Sleep(10000);
-            Debug.WriteLine("exit");
-            semaphore.Release();
-            return "abc";
-
+            //wait to make sure 
         }
         private static string BuildJsonRequestString(int from, int size, string index, string columns)
         {
