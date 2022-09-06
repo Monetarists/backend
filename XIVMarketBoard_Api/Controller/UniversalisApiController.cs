@@ -75,6 +75,10 @@ namespace XIVMarketBoard_Api.Controller
             for (var amount = 0; itemList.Count >= amount; amount += _calloutSize)
             {
                 var itemColl = itemList.Skip(amount).Take(_calloutSize);
+                if (!itemColl.Any())
+                {
+                    break;
+                }
                 var response = await _universalisApiRepository.GetUniversalisEntryForItems(itemColl.Select(i => i.Id.ToString()), world.Name);
                 if (!response.IsSuccessStatusCode)
                 {
