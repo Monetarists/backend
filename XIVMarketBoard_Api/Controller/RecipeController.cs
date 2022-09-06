@@ -38,7 +38,6 @@ namespace XIVMarketBoard_Api.Controller
     public class RecipeController : IRecipeController
     {
         private List<Item> currentItems = new List<Item>();
-        private List<Recipe> currentRecipes = new List<Recipe>();
         private List<Job> currentJobs = new List<Job>();
         private List<ItemSearchCategory> currentItemScs = new List<ItemSearchCategory>();
         private List<ItemUICategory> currentItemUcs = new List<ItemUICategory>();
@@ -104,20 +103,22 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList)
         {
             currentItems = await _xivContext.Items.ToListAsync();
-            currentRecipes = await _xivContext.Recipes.ToListAsync();
             currentJobs = await _xivContext.Jobs.ToListAsync();
             currentItemScs = await _xivContext.ItemSearchCategory.ToListAsync();
             currentItemUcs = await _xivContext.ItemUICategory.ToListAsync();
+            var currentRecipes = await _xivContext.Recipes.Include(x => x.Ingredients).ThenInclude(i => i.Item).ToListAsync();
+
             var recipesToUpsert = new List<Recipe>();
 
             foreach (var recipe in RecipeList)
             {
+                var currentRecipe = currentRecipes.FirstOrDefault(r => r.Id == recipe.Id);
+                var tempRecipe = currentRecipe ?? setRecipeVariables(recipe);
 
-                var tempRecipe = setRecipeVariables(recipe);
-                tempRecipe.Ingredients = setIngredientList(recipe.Ingredients);
+                tempRecipe.Ingredients = setIngredientList(recipe.Ingredients, currentRecipe);
                 tempRecipe.Item = setItemVariables(recipe.Item);
                 if (tempRecipe.Item.CanBeCrafted != true) { tempRecipe.Item.CanBeCrafted = true; }
-                recipesToUpsert.Add(setRecipeVariables(recipe));
+                recipesToUpsert.Add(tempRecipe);
 
             }
 
@@ -131,8 +132,13 @@ namespace XIVMarketBoard_Api.Controller
             return "successfully saved " + RecipeList.Count() + "recipes";
 
         }
-        private ICollection<Ingredient> setIngredientList(ICollection<Ingredient> inputList)
+        private ICollection<Ingredient> setIngredientList(ICollection<Ingredient> inputList, Recipe? currentRecipe)
         {
+
+            if (currentRecipe != null && currentRecipe.Ingredients.Count != 0)
+            {
+                return currentRecipe.Ingredients;
+            }
             var returnList = new List<Ingredient>();
             foreach (var ingredient in inputList)
             {
@@ -146,11 +152,6 @@ namespace XIVMarketBoard_Api.Controller
         {
             var tempItem = currentItems.FirstOrDefault(i => i.Id == item.Id) ?? item;
 
-
-            tempItem.Name_en = item.Name_en;
-            tempItem.Name_de = item.Name_de;
-            tempItem.Name_fr = item.Name_fr;
-            tempItem.Name_ja = item.Name_ja;
             if (!tempItem.CanBeCrafted.HasValue) { tempItem.CanBeCrafted = false; }
             tempItem.IsMarketable = item.IsMarketable ?? false;
             tempItem.ItemUICategory = currentItemUcs.FirstOrDefault(i => i.Id == item.ItemUICategory.Id) ?? item.ItemUICategory;
@@ -171,14 +172,7 @@ namespace XIVMarketBoard_Api.Controller
 
         private Recipe setRecipeVariables(Recipe recipe)
         {
-            var tempRecipe = currentRecipes.FirstOrDefault(r => r.Id == recipe.Id) ?? recipe;
-            tempRecipe.Name_en = recipe.Name_en;
-            tempRecipe.Name_de = recipe.Name_de;
-            tempRecipe.Name_fr = recipe.Name_fr;
-            tempRecipe.Name_ja = recipe.Name_ja;
-            tempRecipe.AmountResult = recipe.AmountResult;
-            tempRecipe.IsExpert = recipe.IsExpert;
-            tempRecipe.IsSpecializationRequired = recipe.IsSpecializationRequired;
+            var tempRecipe = recipe;
             tempRecipe.Job = currentJobs.FirstOrDefault(j => j.Id == recipe.Job.Id) ?? recipe.Job;
 
             if (tempRecipe.Item.ItemSearchCategory != null && tempRecipe.Item.ItemSearchCategory.Id != 0 && !currentItemScs.Select(x => x.Id).ToList().Contains(tempRecipe.Item.ItemSearchCategory.Id)) { currentItemScs.Add(tempRecipe.Item.ItemSearchCategory); }

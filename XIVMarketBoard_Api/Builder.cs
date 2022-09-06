@@ -74,6 +74,7 @@ namespace XIVMarketBoard_Api
             services.AddTransient<IDataCentreController, DataCentreController>();
             services.AddTransient<IJwtUtils, JwtUtils>();
             services.AddTransient<IMapper, Mapper>();
+            services.AddHttpClient();
             services.AddDbContext<XivDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("XivDbConnectionString"),
                 options => options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)

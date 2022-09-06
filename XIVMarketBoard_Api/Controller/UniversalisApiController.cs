@@ -72,7 +72,7 @@ namespace XIVMarketBoard_Api.Controller
         {
             List<UniversalisEntry> uniList = new List<UniversalisEntry>();
 
-            for (var amount = 0; itemList.Count > amount; amount += _calloutSize)
+            for (var amount = 0; itemList.Count >= amount; amount += _calloutSize)
             {
                 var itemColl = itemList.Skip(amount).Take(_calloutSize);
                 if (!itemColl.Any())

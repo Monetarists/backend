@@ -9,8 +9,8 @@
         public string Name_fr { get; set; } = "";
         public string Name_ja { get; set; } = "";
         public int IconID { get; set; }
-        public int IsExpert { get; set; }
-        public int IsSpecializationRequired { get; set; }
+        public bool IsExpert { get; set; }
+        public bool IsSpecializationRequired { get; set; }
         public XivApiClassJob ClassJob { get; set; } = new XivApiClassJob();
         public XivApiItem ItemResult { get; set; } = new XivApiItem();
         public int AmountResult { get; set; }

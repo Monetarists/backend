@@ -20,14 +20,14 @@ namespace XIVMarketBoard_Api.Repositories
         private const string baseAddress = "https://xivapi.com/";
         private readonly IConfiguration configuration;
 
-        private static readonly HttpClient client = new HttpClient();
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public XivApiRepository(IConfiguration configuration)
+        public XivApiRepository(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             this.configuration = configuration;
-
-
+            _httpClientFactory = httpClientFactory;
         }
+
 
 
         public async Task<HttpResponseMessage> GetItemsAsync(int startNumber, int amountOfItems)
@@ -58,7 +58,7 @@ namespace XIVMarketBoard_Api.Repositories
 
         private async Task<HttpResponseMessage> SendRequestAsync(string body, string endpoint)
         {
-
+            var client = _httpClientFactory.CreateClient();
             HttpRequestMessage rM = new HttpRequestMessage(HttpMethod.Get, baseAddress + endpoint);
             var content = new StringContent(body, Encoding.UTF8, "application/json");
             rM.Content = content;
