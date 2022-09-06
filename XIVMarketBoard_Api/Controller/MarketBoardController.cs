@@ -92,7 +92,7 @@ namespace XIVMarketBoard_Api.Controller
                 returnList.Add(universlisEntry);
 
             }
-            //Planetscale db errors when too many recipes are saved at once
+            //db errors when too many recipes are saved at once
             for (var i = 0; resultList.Count > i; i += 1000)
             {
                 var tempList = resultList.Skip(i).Take(1000).ToList();

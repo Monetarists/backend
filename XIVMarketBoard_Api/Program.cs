@@ -149,7 +149,7 @@ app.MapGet("/recipes/{jobAbr}/{worldName}", async (IDataCentreController dataCen
     itemList = itemList.DistinctBy(x => x.Id).ToList();
     if (world == null || !itemList.Any())
     {
-        apiResponse.message = "Not Found";
+        apiResponse.message = "World or Items Not Found";
         return Results.NotFound(apiResponse);
     }
 
