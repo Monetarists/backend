@@ -38,8 +38,6 @@ namespace XIVMarketBoard_Api.Controller
     public class RecipeController : IRecipeController
     {
         private List<Item> currentItems = new List<Item>();
-        private List<Ingredient> currentIngredients = new List<Ingredient>();
-        private List<Recipe> currentRecipes = new List<Recipe>();
         private List<Job> currentJobs = new List<Job>();
         private List<ItemSearchCategory> currentItemScs = new List<ItemSearchCategory>();
         private List<ItemUICategory> currentItemUcs = new List<ItemUICategory>();
@@ -105,10 +103,11 @@ namespace XIVMarketBoard_Api.Controller
         public async Task<string> GetOrCreateRecipes(IEnumerable<Recipe> RecipeList)
         {
             currentItems = await _xivContext.Items.ToListAsync();
-            currentRecipes = await _xivContext.Recipes.Include(x => x.Ingredients).ThenInclude(i => i.Item).ToListAsync();
             currentJobs = await _xivContext.Jobs.ToListAsync();
             currentItemScs = await _xivContext.ItemSearchCategory.ToListAsync();
             currentItemUcs = await _xivContext.ItemUICategory.ToListAsync();
+            var currentRecipes = await _xivContext.Recipes.Include(x => x.Ingredients).ThenInclude(i => i.Item).ToListAsync();
+
             var recipesToUpsert = new List<Recipe>();
 
             foreach (var recipe in RecipeList)
@@ -143,7 +142,6 @@ namespace XIVMarketBoard_Api.Controller
             var returnList = new List<Ingredient>();
             foreach (var ingredient in inputList)
             {
-                //todo make sure we dont double up the ingredients when importing recipes again.
                 ingredient.Item = setItemVariables(ingredient.Item);
                 returnList.Add(ingredient);
 

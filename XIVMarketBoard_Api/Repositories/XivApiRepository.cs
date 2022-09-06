@@ -20,8 +20,6 @@ namespace XIVMarketBoard_Api.Repositories
         private const string baseAddress = "https://xivapi.com/";
         private readonly IConfiguration configuration;
 
-        //private static readonly HttpClient client = new HttpClient();
-
         private readonly IHttpClientFactory _httpClientFactory;
 
         public XivApiRepository(IConfiguration configuration, IHttpClientFactory httpClientFactory)
