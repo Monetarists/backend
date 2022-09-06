@@ -147,6 +147,9 @@ namespace XIVMarketBoard_Api.Controller
                 Name_de = r.Name_de,
                 Name_fr = r.Name_fr,
                 Name_ja = r.Name_ja,
+                IsExpert = r.IsExpert,
+                IsSpecializationRequired = r.IsSpecializationRequired,
+
                 Item = new Item
                 {
                     Id = r.ItemResult.ID ?? 0,
