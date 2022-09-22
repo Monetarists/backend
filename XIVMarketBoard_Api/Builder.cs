@@ -62,8 +62,8 @@ namespace XIVMarketBoard_Api
             services.AddEvents();
             services.AddControllers().AddNewtonsoftJson(o => { o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; });
 
-            services.AddTransient<IMapper, Mapper>();
             services.AddAutoMapper(typeof(MapperProfile));
+            services.AddTransient<IMapper, Mapper>();
 
             services.AddTransient<SaveMarketBoardDataListener>();
             services.AddTransient<ICalculateCraftingCost, CalculateCraftingCost>();
