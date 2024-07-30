@@ -11,7 +11,7 @@ namespace XIVMarketBoard_Api.Entities
         public virtual User? User { get; set; }
         public virtual Retainer? Retainer { get; set; }
         public string RetainerName { get; set; } = "";
-        public string SellerId { get; set; } = "";
+        public string? SellerId { get; set; } = "";
 
         public double Price { get; set; }
         public int Amount { get; set; }

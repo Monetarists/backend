@@ -22,7 +22,7 @@ namespace XIVMarketBoard_Api.Controller
 
     public class UniversalisApiController : IUniversalisApiController
     {
-        private readonly int _calloutSize = 100;
+        private readonly int _calloutSize = 20;
         private readonly IMarketBoardController _marketBoardApiController;
         private readonly IUniversalisApiRepository _universalisApiRepository;
         private readonly IRecipeController _recipeController;
@@ -150,7 +150,7 @@ namespace XIVMarketBoard_Api.Controller
             {
                 //Id = i.listingID ?? Guid.NewGuid().ToString(),
                 RetainerName = i.retainerName,
-                SellerId = i.sellerID,
+                SellerId = i.sellerID == null ? "" : i.sellerID,
                 Price = i.pricePerUnit,
                 Amount = i.quantity,
                 TotalAmount = i.total,
