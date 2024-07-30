@@ -30,7 +30,7 @@ namespace XIVMarketBoard_Api.Tools
             foreach (var query in universalisList)
             {
                 if (DateTime.UtcNow.AddHours(-6) > query.LastUploadDate &&
-                   DateTime.UtcNow.AddHours(-1) > query.QueryDate)
+                   DateTime.UtcNow.AddHours(-0.3) > query.QueryDate)
                 {
                     queryList.Add(query.Item);
                     continue;
