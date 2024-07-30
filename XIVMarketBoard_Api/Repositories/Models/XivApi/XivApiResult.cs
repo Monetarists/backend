@@ -22,8 +22,8 @@
         public int AmountIngredient5 { get; set; }
         public int AmountIngredient6 { get; set; }
         public int AmountIngredient7 { get; set; }
-        public int AmountIngredient8 { get; set; }
-        public int AmountIngredient9 { get; set; }
+        public int? AmountIngredient8 { get; set; }
+        public int? AmountIngredient9 { get; set; }
         public XivApiItem ItemIngredient0 { get; set; } = new XivApiItem();
         public XivApiItem ItemIngredient1 { get; set; } = new XivApiItem();
         public XivApiItem ItemIngredient2 { get; set; } = new XivApiItem();

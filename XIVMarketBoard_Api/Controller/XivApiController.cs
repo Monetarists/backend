@@ -111,7 +111,7 @@ namespace XIVMarketBoard_Api.Controller
                 }
                 resultList.AddRange(responseResults.Results);
                 if (resultsTotal == 0) { resultsTotal = responseResults.Pagination.ResultsTotal; }
-                //await Task.Delay(100);
+                await Task.Delay(100);
 
 
             }
@@ -175,9 +175,9 @@ namespace XIVMarketBoard_Api.Controller
             if (r.ItemIngredient4.ID != null) yield return new Ingredient { Amount = r.AmountIngredient4, Item = CreateItem(r.ItemIngredient4) };
             if (r.ItemIngredient5.ID != null) yield return new Ingredient { Amount = r.AmountIngredient5, Item = CreateItem(r.ItemIngredient5) };
             if (r.ItemIngredient6.ID != null) yield return new Ingredient { Amount = r.AmountIngredient6, Item = CreateItem(r.ItemIngredient6) };
-            if (r.ItemIngredient9.ID != null) yield return new Ingredient { Amount = r.AmountIngredient9, Item = CreateItem(r.ItemIngredient9) };
+            if (r.ItemIngredient9.ID != null) yield return new Ingredient { Amount = (int)r.AmountIngredient9, Item = CreateItem(r.ItemIngredient9) };
             if (r.ItemIngredient7.ID != null) yield return new Ingredient { Amount = r.AmountIngredient7, Item = CreateItem(r.ItemIngredient7) };
-            if (r.ItemIngredient8.ID != null) yield return new Ingredient { Amount = r.AmountIngredient8, Item = CreateItem(r.ItemIngredient8) };
+            if (r.ItemIngredient8.ID != null) yield return new Ingredient { Amount = (int)r.AmountIngredient8, Item = CreateItem(r.ItemIngredient8) };
         }
         private static Item CreateItem(XivApiItem xivItem)
         {
